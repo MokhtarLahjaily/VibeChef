@@ -26,8 +26,6 @@ replay_pid*
 # gradle files
 .gradle/*
 
-# idea files
-.idea/*
 
 # Thumbnails
 ._.DS_Store
@@ -39,3 +37,11 @@ replay_pid*
 .AppleDouble
 .LSOverride
 
+# idea files
+.idea/*
+*.iml
+.gradle
+/local.properties
+/.idea/
+/build/
+/app/build/
