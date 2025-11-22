@@ -1,5 +1,6 @@
 package fr.unica.fetheddine.lahjaily.vibechef.ui
 
+import android.content.Intent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -8,6 +9,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -15,9 +18,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import fr.unica.fetheddine.lahjaily.vibechef.R
 import fr.unica.fetheddine.lahjaily.vibechef.ui.viewmodel.MainViewModel
 import fr.unica.fetheddine.lahjaily.vibechef.ui.viewmodel.UiState
 
+import androidx.compose.material3.ExperimentalMaterial3Api
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VibeChefScreen(viewModel: MainViewModel) {
     // State local pour les ingrédients et la vibe choisie
@@ -25,85 +32,135 @@ fun VibeChefScreen(viewModel: MainViewModel) {
     var selectedVibe by remember { mutableStateOf("Rapide") }
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text(
-            text = "VibeChef",
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.fillMaxWidth(),
-            textAlign = TextAlign.Center
-        )
+    // Texte à partager basé sur l'état actuel
+    val shareText = when (val state = uiState) {
+        is UiState.Success -> state.recipe
+        UiState.Initial -> "Aucune recette générée pour le moment."
+        UiState.Loading -> "Génération en cours..."
+        is UiState.Error -> "Erreur: ${state.message}"
+    }
 
-        OutlinedTextField(
-            value = ingredients,
-            onValueChange = { ingredients = it },
-            label = { Text("Ingrédients") },
-            placeholder = { Text("Ex: poulet, tomates, basilic...") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        // Chips pour la vibe
-        val vibes = listOf("Rapide", "Gourmet", "Fun")
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            vibes.forEach { vibe ->
-                FilterChip(
-                    selected = selectedVibe == vibe,
-                    onClick = { selectedVibe = vibe },
-                    label = { Text(vibe) }
-                )
-            }
-        }
-
-        Button(
-            onClick = {
-                if (ingredients.isNotBlank()) {
-                    viewModel.generateRecipe(ingredients, selectedVibe)
-                }
-            },
-            modifier = Modifier.align(Alignment.End)
-        ) {
-            Text("Cuisiner !")
-        }
-
-        when (val state = uiState) {
-            UiState.Initial -> {
-                Text(
-                    text = "Entrez des ingrédients et choisissez une ambiance pour générer une recette.",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-            UiState.Loading -> {
-                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-            }
-            is UiState.Success -> {
-                val scrollState = rememberScrollState()
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .verticalScroll(scrollState)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        MarkdownText(text = state.recipe)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("VibeChef") },
+                actions = {
+                    IconButton(onClick = {
+                        val intent = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_TEXT, shareText)
+                        }
+                        context.startActivity(
+                            Intent.createChooser(intent, "Partager la recette")
+                        )
+                    }) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_share),
+                            contentDescription = "Partager"
+                        )
                     }
                 }
+            )
+        },
+        floatingActionButton = {
+            if (uiState is UiState.Success) {
+                FloatingActionButton(onClick = {
+                    val intent = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_TEXT, shareText)
+                    }
+                    context.startActivity(Intent.createChooser(intent, "Partager la recette"))
+                }) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_share),
+                        contentDescription = "Partager"
+                    )
+                }
             }
-            is UiState.Error -> {
-                Text(
-                    text = state.message,
-                    color = Color.Red,
-                    style = MaterialTheme.typography.bodyMedium
-                )
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = "VibeChef",
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
+            )
+
+            OutlinedTextField(
+                value = ingredients,
+                onValueChange = { ingredients = it },
+                label = { Text("Ingrédients") },
+                placeholder = { Text("Ex: poulet, tomates, basilic...") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            // Chips pour la vibe
+            val vibes = listOf("Rapide", "Gourmet", "Fun")
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                vibes.forEach { vibe ->
+                    FilterChip(
+                        selected = selectedVibe == vibe,
+                        onClick = { selectedVibe = vibe },
+                        label = { Text(vibe) }
+                    )
+                }
+            }
+
+            Button(
+                onClick = {
+                    if (ingredients.isNotBlank()) {
+                        viewModel.generateRecipe(ingredients, selectedVibe)
+                    }
+                },
+                modifier = Modifier.align(Alignment.End)
+            ) {
+                Text("Cuisiner !")
+            }
+
+            when (val state = uiState) {
+                UiState.Initial -> {
+                    Text(
+                        text = "Entrez des ingrédients et choisissez une ambiance pour générer une recette.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+                UiState.Loading -> {
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                }
+                is UiState.Success -> {
+                    val scrollState = rememberScrollState()
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .verticalScroll(scrollState)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            MarkdownText(text = state.recipe)
+                        }
+                    }
+                }
+                is UiState.Error -> {
+                    Text(
+                        text = state.message,
+                        color = Color.Red,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
             }
         }
     }
