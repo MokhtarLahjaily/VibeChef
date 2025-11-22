@@ -8,6 +8,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -90,10 +94,7 @@ fun VibeChefScreen(viewModel: MainViewModel) {
                         .verticalScroll(scrollState)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = state.recipe,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
+                        MarkdownText(text = state.recipe)
                     }
                 }
             }
@@ -108,3 +109,51 @@ fun VibeChefScreen(viewModel: MainViewModel) {
     }
 }
 
+// Composable simple pour rendre un sous-ensemble de Markdown :
+// - Titres niveau 3: lignes commençant par "### "
+// - Gras inline: **texte**
+@Composable
+private fun MarkdownText(text: String, modifier: Modifier = Modifier) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        val lines = remember(text) { text.lines() }
+        lines.forEach { rawLine ->
+            val line = rawLine.trimEnd()
+            when {
+                line.startsWith("### ") -> {
+                    val title = line.removePrefix("### ").trim()
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                }
+                line.isBlank() -> {
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
+                else -> {
+                    Text(text = buildBoldAnnotated(line), style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun buildBoldAnnotated(input: String): AnnotatedString {
+    // Parse très basique du gras **...** sans gestion des échappements complexes
+    val regex = Regex("\\*\\*(.+?)\\*\\*")
+    return buildAnnotatedString {
+        var lastIndex = 0
+        regex.findAll(input).forEach { match ->
+            val start = match.range.first
+            val end = match.range.last + 1
+            append(input.substring(lastIndex, start))
+            pushStyle(SpanStyle(fontWeight = FontWeight.Bold))
+            append(match.groupValues[1])
+            pop()
+            lastIndex = end
+        }
+        if (lastIndex < input.length) {
+            append(input.substring(lastIndex))
+        }
+    }
+}
