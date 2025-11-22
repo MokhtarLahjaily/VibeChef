@@ -7,7 +7,6 @@ import com.google.ai.client.generativeai.type.generationConfig
 class GeminiRepository {
 
     private val generativeModel = GenerativeModel(
-        // Le modèle 'gemini-2.5-flash' n'étant pas valide, 'gemini-1.5-flash' est utilisé à la place.
         modelName = "gemini-2.5-flash",
         apiKey = BuildConfig.API_KEY,
         generationConfig = generationConfig {
