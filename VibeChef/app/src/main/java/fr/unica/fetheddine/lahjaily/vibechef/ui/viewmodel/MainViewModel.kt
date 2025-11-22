@@ -42,7 +42,7 @@ class MainViewModel(
                 _uiState.value = UiState.Success(recipe)
             } catch (e: Exception) {
                 // Met à jour l'état avec le message d'erreur en cas d'échec
-                _uiState.value = UiState.Error(e.message ?: "Une erreur inconnue est survenue")
+                _uiState.value = UiState.Error(e.message ?: "Erreur inconnue")
             }
         }
     }

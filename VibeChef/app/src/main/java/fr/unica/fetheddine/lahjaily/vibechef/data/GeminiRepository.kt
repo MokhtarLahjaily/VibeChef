@@ -47,13 +47,7 @@ class GeminiRepository {
             N'ajoute aucune autre section.
         """.trimIndent()
 
-        return try {
-            val response = generativeModel.generateContent(prompt)
-            response.text ?: "La recette générée est vide."
-        } catch (e: Exception) {
-            // It's a good practice to log the exception
-            e.printStackTrace()
-            "Une erreur est survenue lors de la génération de la recette : ${e.message}"
-        }
+        val response = generativeModel.generateContent(prompt)
+        return response.text ?: throw Exception("Réponse vide de l'IA")
     }
 }
