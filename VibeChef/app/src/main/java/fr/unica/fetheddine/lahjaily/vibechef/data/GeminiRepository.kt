@@ -19,23 +19,31 @@ class GeminiRepository {
      *
      * @param ingredients The ingredients for the recipe.
      * @param vibe The vibe for the meal.
+     * @param filters The dietary restrictions or preferences.
      * @return The generated recipe as a String.
      */
-    suspend fun generateRecipe(ingredients: String, vibe: String): String {
+    suspend fun generateRecipe(ingredients: String, vibe: String, filters: List<String>): String {
+        val restrictions = if (filters.isNotEmpty()) filters.joinToString(", ") else "Aucune"
         val prompt = """
             Tu es un chef cuisinier créatif.
             Crée une recette structurée en français avec ces ingrédients : $ingredients
             Ambiance du repas : $vibe
+            Restrictions / Contraintes: $restrictions
+            
+            Applique les contraintes:
+            - "Végétarien" => aucune viande ou poisson
+            - "Sans Gluten" => éviter blé, seigle, orge; proposer alternatives (riz, maïs, avoine certifiée, etc.)
+            - "Épicé" => ajouter une chaleur modérée (piment, paprika fumé, piment d'Espelette) sans masquer les saveurs
             
             Format de sortie attendu (Markdown) :
             ### 🍽️ Ingrédients
-            - Liste des ingrédients avec quantités estimées.
+            - Liste des ingrédients avec quantités estimées (adapter selon restrictions)
             
             ### 🔥 Instructions
-            1. Étapes numérotées claires et concises.
+            1. Étapes numérotées claires et concises (intégrer les adaptations nécessaires)
             
-            Ajoute des émojis pertinents au début de chaque grand titre (Ingrédients, Instructions) pour rendre la lecture plus amusante (ex: 🍅🥕🔥🍽️👨‍🍳). Garde la structure claire et concise.
-            Si un ingrédient semble incohérent, ajoute une ligne **Note:** avant la section Ingrédients.
+            Ajoute des émojis pertinents au début de chaque grand titre (Ingrédients, Instructions) pour rendre la lecture plus amusante.
+            Si un ingrédient semble incohérent avec une restriction, ajoute une ligne **Note:** avant la section Ingrédients pour proposer une substitution.
             N'ajoute aucune autre section.
         """.trimIndent()
 

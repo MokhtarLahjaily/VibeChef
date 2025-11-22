@@ -30,14 +30,14 @@ class MainViewModel(
      * Lance la génération de recette via le repository.
      * Met à jour l'UiState pour refléter le chargement, le succès ou l'erreur.
      */
-    fun generateRecipe(ingredients: String, vibe: String) {
+    fun generateRecipe(ingredients: String, vibe: String, filters: List<String>) {
         // 4. Utilise viewModelScope pour lancer une coroutine liée au cycle de vie du ViewModel
         viewModelScope.launch {
             // Met l'état à Loading avant de commencer l'appel réseau
             _uiState.value = UiState.Loading
             try {
                 // Appelle la fonction suspend du repository
-                val recipe = geminiRepository.generateRecipe(ingredients, vibe)
+                val recipe = geminiRepository.generateRecipe(ingredients, vibe, filters)
                 // Met à jour l'état avec le résultat en cas de succès
                 _uiState.value = UiState.Success(recipe)
             } catch (e: Exception) {

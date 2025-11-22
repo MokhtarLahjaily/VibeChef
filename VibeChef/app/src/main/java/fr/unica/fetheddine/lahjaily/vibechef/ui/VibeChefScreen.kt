@@ -9,9 +9,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -19,9 +16,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import fr.unica.fetheddine.lahjaily.vibechef.R
 import fr.unica.fetheddine.lahjaily.vibechef.ui.viewmodel.MainViewModel
 import fr.unica.fetheddine.lahjaily.vibechef.ui.viewmodel.UiState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalClipboardManager
 
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.rememberCoroutineScope
@@ -33,6 +34,7 @@ fun VibeChefScreen(viewModel: MainViewModel) {
     // State local pour les ingrédients et la vibe choisie
     var ingredients by remember { mutableStateOf("") }
     var selectedVibe by remember { mutableStateOf("Rapide") }
+    var selectedFilters by remember { mutableStateOf(setOf<String>()) }
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -63,7 +65,7 @@ fun VibeChefScreen(viewModel: MainViewModel) {
                         )
                     }) {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_share),
+                            imageVector = Icons.Filled.Share,
                             contentDescription = "Partager"
                         )
                     }
@@ -80,7 +82,7 @@ fun VibeChefScreen(viewModel: MainViewModel) {
                     context.startActivity(Intent.createChooser(intent, "Partager la recette"))
                 }) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_share),
+                        imageVector = Icons.Filled.Share,
                         contentDescription = "Partager"
                     )
                 }
@@ -110,7 +112,28 @@ fun VibeChefScreen(viewModel: MainViewModel) {
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Chips pour la vibe
+            // Restrictions chips multi-sélection
+            val restrictionOptions = listOf("Végétarien", "Sans Gluten", "Épicé")
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(text = "Restrictions", style = MaterialTheme.typography.titleSmall)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    restrictionOptions.forEach { opt ->
+                        val selected = opt in selectedFilters
+                        FilterChip(
+                            selected = selected,
+                            onClick = {
+                                selectedFilters = if (selected) selectedFilters - opt else selectedFilters + opt
+                            },
+                            label = { Text(opt) }
+                        )
+                    }
+                }
+            }
+
+            // Vibes chips
             val vibes = listOf("Rapide", "Gourmet", "Fun")
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -128,7 +151,7 @@ fun VibeChefScreen(viewModel: MainViewModel) {
             Button(
                 onClick = {
                     if (ingredients.isNotBlank()) {
-                        viewModel.generateRecipe(ingredients, selectedVibe)
+                        viewModel.generateRecipe(ingredients, selectedVibe, selectedFilters.toList())
                     }
                 },
                 modifier = Modifier.align(Alignment.End)
@@ -139,7 +162,7 @@ fun VibeChefScreen(viewModel: MainViewModel) {
             when (val state = uiState) {
                 UiState.Initial -> {
                     Text(
-                        text = "Entrez des ingrédients et choisissez une ambiance pour générer une recette.",
+                        text = "Entrez des ingrédients, choisissez une ambiance et des restrictions.",
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
@@ -167,7 +190,7 @@ fun VibeChefScreen(viewModel: MainViewModel) {
                                     clipboardManager.setText(AnnotatedString(state.recipe))
                                     scope.launch { snackbarHostState.showSnackbar("Recette copiée dans le presse-papiers") }
                                 }) {
-                                    Icon(painter = painterResource(id = R.drawable.ic_copy), contentDescription = "Copier")
+                                    Icon(imageVector = Icons.Filled.ContentCopy, contentDescription = "Copier")
                                 }
                             }
                             MarkdownText(text = state.recipe)
