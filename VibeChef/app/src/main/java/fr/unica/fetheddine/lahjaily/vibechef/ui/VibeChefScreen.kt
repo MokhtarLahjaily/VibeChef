@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -23,6 +24,8 @@ import fr.unica.fetheddine.lahjaily.vibechef.ui.viewmodel.MainViewModel
 import fr.unica.fetheddine.lahjaily.vibechef.ui.viewmodel.UiState
 
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,6 +36,9 @@ fun VibeChefScreen(viewModel: MainViewModel) {
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val clipboardManager = LocalClipboardManager.current
 
     // Texte à partager basé sur l'état actuel
     val shareText = when (val state = uiState) {
@@ -79,7 +85,8 @@ fun VibeChefScreen(viewModel: MainViewModel) {
                     )
                 }
             }
-        }
+        },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -143,13 +150,26 @@ fun VibeChefScreen(viewModel: MainViewModel) {
                 }
                 is UiState.Success -> {
                     val scrollState = rememberScrollState()
+                    val lines = remember(state.recipe) { state.recipe.lines() }
+                    val title: String = lines.firstOrNull { it.startsWith("### ") }?.removePrefix("### ")
+                        ?.trim()!!
+                        .ifBlank { "Recette" }
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f)
                             .verticalScroll(scrollState)
                     ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                                Text(text = title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+                                IconButton(onClick = {
+                                    clipboardManager.setText(AnnotatedString(state.recipe))
+                                    scope.launch { snackbarHostState.showSnackbar("Recette copiée dans le presse-papiers") }
+                                }) {
+                                    Icon(painter = painterResource(id = R.drawable.ic_copy), contentDescription = "Copier")
+                                }
+                            }
                             MarkdownText(text = state.recipe)
                         }
                     }
