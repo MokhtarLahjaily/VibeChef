@@ -12,7 +12,7 @@ android {
 
     defaultConfig {
         applicationId = "fr.unica.fetheddine.lahjaily.vibechef"
-        minSdk = 29
+        minSdk = 28
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"

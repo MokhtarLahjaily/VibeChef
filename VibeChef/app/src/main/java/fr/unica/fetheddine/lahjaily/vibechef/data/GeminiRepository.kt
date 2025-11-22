@@ -23,9 +23,20 @@ class GeminiRepository {
      */
     suspend fun generateRecipe(ingredients: String, vibe: String): String {
         val prompt = """
-            Tu es un chef cuisinier créatif. Crée une recette avec ces ingrédients : $ingredients.
-            L'ambiance du repas est : $vibe.
-            Sois concis et formatte la réponse avec des titres clairs.
+            Tu es un chef cuisinier créatif.
+            Crée une recette structurée en français avec ces ingrédients : $ingredients
+            Ambiance du repas : $vibe
+            
+            Format de sortie attendu (Markdown) :
+            ### 🍽️ Ingrédients
+            - Liste des ingrédients avec quantités estimées.
+            
+            ### 🔥 Instructions
+            1. Étapes numérotées claires et concises.
+            
+            Ajoute des émojis pertinents au début de chaque grand titre (Ingrédients, Instructions) pour rendre la lecture plus amusante (ex: 🍅🥕🔥🍽️👨‍🍳). Garde la structure claire et concise.
+            Si un ingrédient semble incohérent, ajoute une ligne **Note:** avant la section Ingrédients.
+            N'ajoute aucune autre section.
         """.trimIndent()
 
         return try {
