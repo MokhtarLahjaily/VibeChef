@@ -3,6 +3,7 @@ package fr.unica.fetheddine.lahjaily.vibechef.ui
 import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.content.ClipData
 import android.speech.RecognizerIntent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -27,9 +28,12 @@ import androidx.compose.material.icons.filled.Brightness4
 import androidx.compose.material.icons.filled.Brightness7
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
@@ -47,7 +51,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun VibeChefScreen(viewModel: MainViewModel, onSignOut: () -> Unit) {
+fun VibeChefScreen(
+    viewModel: MainViewModel,
+    userId: String,
+    onSignOut: () -> Unit,
+    onNavigateToHistory: () -> Unit
+) {
     // Contexte accessible en premier pour init valeurs non @Composable
     val context = LocalContext.current
     // State local pour les ingrédients et la vibe choisie
@@ -60,7 +69,7 @@ fun VibeChefScreen(viewModel: MainViewModel, onSignOut: () -> Unit) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-    val clipboardManager = LocalClipboardManager.current
+    val clipboard = LocalClipboard.current
 
     val keyboardController = LocalSoftwareKeyboardController.current
     // Texte à partager basé sur l'état actuel (utilise context.getString pour éviter composable hors scope)
@@ -125,6 +134,12 @@ fun VibeChefScreen(viewModel: MainViewModel, onSignOut: () -> Unit) {
                             Icon(
                                 imageVector = Icons.Filled.Share,
                                 contentDescription = stringResource(R.string.desc_share)
+                            )
+                        }
+                        IconButton(onClick = onNavigateToHistory) {
+                            Icon(
+                                imageVector = Icons.Filled.History,
+                                contentDescription = "Historique"
                             )
                         }
                         IconButton(onClick = onSignOut) {
@@ -300,7 +315,7 @@ fun VibeChefScreen(viewModel: MainViewModel, onSignOut: () -> Unit) {
                     is UiState.Success -> {
                         val scrollState = rememberScrollState()
                         val lines = remember(state.recipe) { state.recipe.lines() }
-                        val title: String = lines.firstOrNull { it.startsWith("### ") }?.removePrefix("### ")
+                        val title: String = lines.firstOrNull { it.startsWith("# ") }?.removePrefix("# ")
                             ?.trim().orEmpty().ifBlank { stringResource(R.string.fallback_recipe_title) }
                         Card(
                             modifier = Modifier
@@ -323,8 +338,17 @@ fun VibeChefScreen(viewModel: MainViewModel, onSignOut: () -> Unit) {
                                         modifier = Modifier.weight(1f)
                                     )
                                     IconButton(onClick = {
-                                        clipboardManager.setText(AnnotatedString(state.recipe))
-                                        scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.snackbar_recipe_copied)) }
+                                        viewModel.saveCurrentRecipe(userId)
+                                        scope.launch { snackbarHostState.showSnackbar("Recette sauvegardée dans l'historique !") }
+                                    }) {
+                                        Icon(imageVector = Icons.Filled.Save, contentDescription = "Sauvegarder")
+                                    }
+                                    IconButton(onClick = {
+                                        scope.launch {
+                                            val clipData = ClipData.newPlainText("recipe", state.recipe)
+                                            clipboard.setClipEntry(ClipEntry(clipData))
+                                            snackbarHostState.showSnackbar(context.getString(R.string.snackbar_recipe_copied))
+                                        }
                                     }) {
                                         Icon(imageVector = Icons.Filled.ContentCopy, contentDescription = stringResource(R.string.action_copy))
                                     }
@@ -388,6 +412,9 @@ private fun MarkdownText(text: String, modifier: Modifier = Modifier) {
         lines.forEach { rawLine ->
             val line = rawLine.trimEnd()
             when {
+                line.startsWith("# ") -> {
+                    // On ignore le titre principal car il est affiché dans le header de la Card
+                }
                 line.startsWith("### ") -> {
                     val title = line.removePrefix("### ").trim()
                     Text(

@@ -23,6 +23,8 @@ import fr.unica.fetheddine.lahjaily.vibechef.R
 import fr.unica.fetheddine.lahjaily.vibechef.ui.viewmodel.AuthUiState
 import fr.unica.fetheddine.lahjaily.vibechef.ui.viewmodel.LoginViewModel
 
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+
 @Composable
 fun AuthScreen(loginViewModel: LoginViewModel, onAuthenticated: () -> Unit) {
     val authState by loginViewModel.authState.collectAsState()
@@ -30,6 +32,7 @@ fun AuthScreen(loginViewModel: LoginViewModel, onAuthenticated: () -> Unit) {
     var isSignUpMode by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollState = rememberScrollState()
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     LaunchedEffect(authState) {
         if (authState is AuthUiState.Authenticated) {
@@ -102,6 +105,7 @@ fun AuthScreen(loginViewModel: LoginViewModel, onAuthenticated: () -> Unit) {
             // Action button
             Button(
                 onClick = {
+                    keyboardController?.hide()
                     if (isSignUpMode) loginViewModel.signUp() else loginViewModel.signIn()
                 },
                 enabled = authState !is AuthUiState.Loading,

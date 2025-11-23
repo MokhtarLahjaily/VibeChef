@@ -44,6 +44,8 @@ class GeminiRepository {
             ${if (constraintInstructions.isNotEmpty()) "Applique les règles suivantes pour les contraintes demandées :\n$constraintInstructions" else ""}
             
             Format de sortie attendu (Markdown) :
+            # [Nom de la recette créative et amusante ici]
+
             ### 🍽️ Ingrédients
             - Liste des ingrédients avec quantités estimées (adapter selon restrictions)
             
@@ -52,7 +54,7 @@ class GeminiRepository {
             
             Ajoute des émojis pertinents au début de chaque grand titre (Ingrédients, Instructions) pour rendre la lecture plus amusante.
             Si un ingrédient semble incohérent avec une restriction active, ajoute une ligne **Note:** avant la section Ingrédients pour proposer une substitution.
-            N'ajoute aucune autre section.
+            N'ajoute aucune autre section (pas d'intro ni de conclusion).
         """.trimIndent()
 
         val response = generativeModel.generateContent(prompt)

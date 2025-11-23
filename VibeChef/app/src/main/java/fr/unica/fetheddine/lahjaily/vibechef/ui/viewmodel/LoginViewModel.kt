@@ -34,6 +34,8 @@ class LoginViewModel(private val authRepository: AuthRepository = AuthRepository
     private val _formState = MutableStateFlow(LoginFormState())
     val formState: StateFlow<LoginFormState> = _formState.asStateFlow()
 
+    val currentUser get() = authRepository.currentUser
+
     init {
         // Si un utilisateur est déjà connecté
         authRepository.currentUser?.let { user ->

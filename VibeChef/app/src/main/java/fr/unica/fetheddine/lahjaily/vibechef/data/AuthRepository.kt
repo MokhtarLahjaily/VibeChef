@@ -14,7 +14,8 @@ class AuthRepository {
     suspend fun signIn(email: String, pass: String): Result<FirebaseUser> {
         return try {
             val result = auth.signInWithEmailAndPassword(email, pass).await()
-            Result.success(result.user!!)
+            val user = result.user ?: throw Exception("Erreur: Utilisateur introuvable")
+            Result.success(user)
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -23,7 +24,8 @@ class AuthRepository {
     suspend fun signUp(email: String, pass: String): Result<FirebaseUser> {
         return try {
             val result = auth.createUserWithEmailAndPassword(email, pass).await()
-            Result.success(result.user!!)
+            val user = result.user ?: throw Exception("Erreur: Utilisateur introuvable")
+            Result.success(user)
         } catch (e: Exception) {
             Result.failure(e)
         }
