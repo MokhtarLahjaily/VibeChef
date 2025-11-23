@@ -7,13 +7,18 @@ import android.speech.RecognizerIntent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -21,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import fr.unica.fetheddine.lahjaily.vibechef.R
 import fr.unica.fetheddine.lahjaily.vibechef.ui.viewmodel.MainViewModel
 import fr.unica.fetheddine.lahjaily.vibechef.ui.viewmodel.UiState
 import androidx.compose.material.icons.Icons
@@ -89,7 +95,6 @@ fun VibeChefScreen(viewModel: MainViewModel) {
         }
     }
 
-    // Ajout: palette locale selon isDark (ne remplace pas forcément le thème global si déjà fourni au-dessus)
     val localColorScheme = remember(isDark) { if (isDark) darkColorScheme() else lightColorScheme() }
 
     MaterialTheme(colorScheme = localColorScheme) {
@@ -280,22 +285,38 @@ fun VibeChefScreen(viewModel: MainViewModel) {
                         val scrollState = rememberScrollState()
                         val lines = remember(state.recipe) { state.recipe.lines() }
                         val title: String = lines.firstOrNull { it.startsWith("### ") }?.removePrefix("### ")
-                            ?.trim()!!.ifBlank { "Recette" }
+                            ?.trim()!!
+                            .ifBlank { "Recette" }
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .weight(1f)
-                                .verticalScroll(scrollState),
-                            // Ajout: couleur de surface explicite pour compatibilité dark/light
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                                .verticalScroll(scrollState)
                         ) {
-                            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                            Column(
+                                modifier = Modifier.padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                // Image d'illustration en haut (directe, sans fallback)
+                                Image(
+                                    painter = painterResource(id = R.drawable.header_image),
+                                    contentDescription = "Illustration de la recette",
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(200.dp)
+                                        .clip(RoundedCornerShape(16.dp))
+                                )
+
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
                                     Text(
                                         text = title,
                                         style = MaterialTheme.typography.titleLarge,
-                                        modifier = Modifier.weight(1f),
-                                        color = MaterialTheme.colorScheme.onSurface
+                                        modifier = Modifier.weight(1f)
                                     )
                                     IconButton(onClick = {
                                         clipboardManager.setText(AnnotatedString(state.recipe))
@@ -355,9 +376,7 @@ fun VibeChefScreen(viewModel: MainViewModel) {
     }
 }
 
-// Composable simple pour rendre un sous-ensemble de Markdown :
-// - Titres niveau 3: lignes commençant par "### "
-// - Gras inline: **texte**
+
 @Composable
 private fun MarkdownText(text: String, modifier: Modifier = Modifier) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -370,7 +389,6 @@ private fun MarkdownText(text: String, modifier: Modifier = Modifier) {
                     Text(
                         text = title,
                         style = MaterialTheme.typography.titleMedium,
-                        // Ajout: couleur forcée
                         color = MaterialTheme.colorScheme.onSurface
                     )
                 }
@@ -381,7 +399,6 @@ private fun MarkdownText(text: String, modifier: Modifier = Modifier) {
                     Text(
                         text = buildBoldAnnotated(line),
                         style = MaterialTheme.typography.bodyMedium,
-                        // Ajout: couleur forcée
                         color = MaterialTheme.colorScheme.onSurface
                     )
                 }
