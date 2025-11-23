@@ -7,25 +7,14 @@ import android.speech.RecognizerIntent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.res.stringResource
 import fr.unica.fetheddine.lahjaily.vibechef.R
 import fr.unica.fetheddine.lahjaily.vibechef.ui.viewmodel.MainViewModel
 import fr.unica.fetheddine.lahjaily.vibechef.ui.viewmodel.UiState
@@ -39,37 +28,49 @@ import androidx.compose.material.icons.filled.Brightness7
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalClipboardManager
-
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import java.util.Locale
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VibeChefScreen(viewModel: MainViewModel) {
+    // Contexte accessible en premier pour init valeurs non @Composable
+    val context = LocalContext.current
     // State local pour les ingrédients et la vibe choisie
     var ingredients by remember { mutableStateOf("") }
-    var selectedVibe by remember { mutableStateOf("Rapide") }
+    var selectedVibe by remember { mutableStateOf(context.getString(R.string.vibe_fast)) }
     var selectedFilters by remember { mutableStateOf(setOf<String>()) }
-    // obtenir la valeur système hors du lambda remember (isSystemInDarkTheme est @Composable)
     val systemDark = isSystemInDarkTheme()
     var isDark by remember { mutableStateOf(systemDark) }
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val clipboardManager = LocalClipboardManager.current
 
-    // Texte à partager basé sur l'état actuel
-    val shareText = when (val state = uiState) {
-        is UiState.Success -> state.recipe
-        UiState.Initial -> "Aucune recette générée pour le moment."
-        UiState.Loading -> "Génération en cours..."
-        is UiState.Error -> "Erreur: ${state.message}"
+    val keyboardController = LocalSoftwareKeyboardController.current
+    // Texte à partager basé sur l'état actuel (utilise context.getString pour éviter composable hors scope)
+    val shareText by remember(uiState) {
+        derivedStateOf {
+            when (val state = uiState) {
+                is UiState.Success -> state.recipe
+                UiState.Initial -> context.getString(R.string.status_no_recipe)
+                UiState.Loading -> context.getString(R.string.status_loading)
+                is UiState.Error -> context.getString(R.string.status_error, state.message)
+            }
+        }
     }
 
     // Launcher pour la reconnaissance vocale
@@ -80,18 +81,18 @@ fun VibeChefScreen(viewModel: MainViewModel) {
             if (!spokenText.isNullOrBlank()) {
                 ingredients = spokenText
             } else {
-                scope.launch { snackbarHostState.showSnackbar("Aucun texte reconnu") }
+                scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.snackbar_no_speech_text)) }
             }
         } else {
-            scope.launch { snackbarHostState.showSnackbar("Dictée annulée") }
+            scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.snackbar_speech_cancelled)) }
         }
     }
-    // Intent pré-configuré pour la dictée
+    // Intent pré-configuré pour la dictée (context.getString au lieu de stringResource)
     val speechIntent = remember {
         Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
-            putExtra(RecognizerIntent.EXTRA_PROMPT, "Dictez vos ingrédients")
+            putExtra(RecognizerIntent.EXTRA_PROMPT, context.getString(R.string.speech_prompt))
         }
     }
 
@@ -101,13 +102,13 @@ fun VibeChefScreen(viewModel: MainViewModel) {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("VibeChef") },
+                    title = { Text(stringResource(R.string.title_app)) },
                     actions = {
-                        // Ajout: IconToggleButton pour basculer clair/sombre
                         IconToggleButton(checked = isDark, onCheckedChange = { isDark = it }) {
+                            val cd = if (isDark) stringResource(R.string.desc_theme_toggle_light) else stringResource(R.string.desc_theme_toggle_dark)
                             Icon(
                                 imageVector = if (isDark) Icons.Filled.Brightness7 else Icons.Filled.Brightness4,
-                                contentDescription = if (isDark) "Passer en thème clair" else "Passer en thème sombre"
+                                contentDescription = cd
                             )
                         }
                         IconButton(onClick = {
@@ -116,12 +117,12 @@ fun VibeChefScreen(viewModel: MainViewModel) {
                                 putExtra(Intent.EXTRA_TEXT, shareText)
                             }
                             context.startActivity(
-                                Intent.createChooser(intent, "Partager la recette")
+                                Intent.createChooser(intent, context.getString(R.string.desc_share_full))
                             )
                         }) {
                             Icon(
                                 imageVector = Icons.Filled.Share,
-                                contentDescription = "Partager"
+                                contentDescription = stringResource(R.string.desc_share)
                             )
                         }
                     }
@@ -134,17 +135,16 @@ fun VibeChefScreen(viewModel: MainViewModel) {
                             type = "text/plain"
                             putExtra(Intent.EXTRA_TEXT, shareText)
                         }
-                        context.startActivity(Intent.createChooser(intent, "Partager la recette"))
+                        context.startActivity(Intent.createChooser(intent, context.getString(R.string.desc_share_full)))
                     }) {
                         Icon(
                             imageVector = Icons.Filled.Share,
-                            contentDescription = "Partager"
+                            contentDescription = stringResource(R.string.desc_share)
                         )
                     }
                 }
             },
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-            // Ajout: couleurs explicites du Scaffold pour dark/light
             containerColor = MaterialTheme.colorScheme.background,
             contentColor = MaterialTheme.colorScheme.onBackground
         ) { innerPadding ->
@@ -156,7 +156,7 @@ fun VibeChefScreen(viewModel: MainViewModel) {
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
-                    text = "VibeChef",
+                    text = stringResource(R.string.title_app),
                     style = MaterialTheme.typography.headlineMedium,
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center,
@@ -166,26 +166,31 @@ fun VibeChefScreen(viewModel: MainViewModel) {
                 OutlinedTextField(
                     value = ingredients,
                     onValueChange = { ingredients = it },
-                    label = { Text("Ingrédients") },
-                    placeholder = { Text("Ex: poulet, tomates, basilic...") },
+                    label = { Text(stringResource(R.string.label_ingredients)) },
+                    placeholder = { Text(stringResource(R.string.placeholder_ingredients)) },
                     modifier = Modifier.fillMaxWidth(),
                     trailingIcon = {
                         IconButton(onClick = {
                             try {
                                 speechLauncher.launch(speechIntent)
-                            } catch (_: ActivityNotFoundException) { // underscore pour ignorer le paramètre
-                                scope.launch { snackbarHostState.showSnackbar("Reconnaissance vocale non disponible") }
+                            } catch (_: ActivityNotFoundException) {
+                                scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.snackbar_speech_unavailable)) }
                             }
                         }) {
-                            Icon(imageVector = Icons.Filled.Mic, contentDescription = "Dicter")
+                            Icon(imageVector = Icons.Filled.Mic, contentDescription = stringResource(R.string.action_dictate))
                         }
                     }
                 )
 
-                // Restrictions chips multi-sélection
-                val restrictionOptions = listOf("Végétarien", "Sans Gluten", "Épicé")
+                val restrictionOptions = remember {
+                    listOf(
+                        context.getString(R.string.filter_vegetarian),
+                        context.getString(R.string.filter_gluten_free),
+                        context.getString(R.string.filter_spicy)
+                    )
+                }
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(text = "Restrictions", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground)
+                    Text(text = stringResource(R.string.title_restrictions), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -203,8 +208,13 @@ fun VibeChefScreen(viewModel: MainViewModel) {
                     }
                 }
 
-                // Vibes chips
-                val vibes = listOf("Rapide", "Gourmet", "Fun")
+                val vibes = remember {
+                    listOf(
+                        context.getString(R.string.vibe_fast),
+                        context.getString(R.string.vibe_gourmet),
+                        context.getString(R.string.vibe_fun)
+                    )
+                }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -220,19 +230,20 @@ fun VibeChefScreen(viewModel: MainViewModel) {
 
                 Button(
                     onClick = {
+                        keyboardController?.hide()
                         if (ingredients.isNotBlank()) {
                             viewModel.generateRecipe(ingredients, selectedVibe, selectedFilters.toList())
                         }
                     },
                     modifier = Modifier.align(Alignment.End)
                 ) {
-                    Text("Cuisiner !")
+                    Text(stringResource(R.string.btn_cook))
                 }
 
                 when (val state = uiState) {
                     UiState.Initial -> {
                         Text(
-                            text = "Entrez des ingrédients, choisissez une ambiance et des restrictions.",
+                            text = stringResource(R.string.msg_initial_instructions),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
@@ -269,12 +280,12 @@ fun VibeChefScreen(viewModel: MainViewModel) {
                             ) {
                                 Icon(
                                     imageVector = Icons.Filled.Edit,
-                                    contentDescription = "Chargement",
+                                    contentDescription = stringResource(R.string.desc_loading_icon),
                                     modifier = Modifier.size(80.dp).scale(scale),
                                     tint = MaterialTheme.colorScheme.primary
                                 )
                                 Text(
-                                    text = "Le chef réfléchit...",
+                                    text = context.getString(R.string.loading_thinking),
                                     style = MaterialTheme.typography.titleMedium,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha)
                                 )
@@ -285,8 +296,7 @@ fun VibeChefScreen(viewModel: MainViewModel) {
                         val scrollState = rememberScrollState()
                         val lines = remember(state.recipe) { state.recipe.lines() }
                         val title: String = lines.firstOrNull { it.startsWith("### ") }?.removePrefix("### ")
-                            ?.trim()!!
-                            .ifBlank { "Recette" }
+                            ?.trim().orEmpty().ifBlank { stringResource(R.string.fallback_recipe_title) }
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -297,17 +307,6 @@ fun VibeChefScreen(viewModel: MainViewModel) {
                                 modifier = Modifier.padding(16.dp),
                                 verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                // Image d'illustration en haut (directe, sans fallback)
-                                Image(
-                                    painter = painterResource(id = R.drawable.header_image),
-                                    contentDescription = "Illustration de la recette",
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(200.dp)
-                                        .clip(RoundedCornerShape(16.dp))
-                                )
-
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -320,9 +319,9 @@ fun VibeChefScreen(viewModel: MainViewModel) {
                                     )
                                     IconButton(onClick = {
                                         clipboardManager.setText(AnnotatedString(state.recipe))
-                                        scope.launch { snackbarHostState.showSnackbar("Recette copiée dans le presse-papiers") }
+                                        scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.snackbar_recipe_copied)) }
                                     }) {
-                                        Icon(imageVector = Icons.Filled.ContentCopy, contentDescription = "Copier")
+                                        Icon(imageVector = Icons.Filled.ContentCopy, contentDescription = stringResource(R.string.action_copy))
                                     }
                                 }
                                 MarkdownText(text = state.recipe)
@@ -343,7 +342,7 @@ fun VibeChefScreen(viewModel: MainViewModel) {
                             ) {
                                 Icon(
                                     imageVector = Icons.Rounded.Warning,
-                                    contentDescription = "Erreur",
+                                    contentDescription = stringResource(R.string.desc_error_icon),
                                     tint = MaterialTheme.colorScheme.error,
                                     modifier = Modifier.size(64.dp)
                                 )
@@ -361,11 +360,11 @@ fun VibeChefScreen(viewModel: MainViewModel) {
                                         if (ingredients.isNotBlank()) {
                                             viewModel.generateRecipe(ingredients, selectedVibe, selectedFilters.toList())
                                         } else {
-                                            scope.launch { snackbarHostState.showSnackbar("Veuillez saisir des ingrédients pour réessayer.") }
+                                            scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.snackbar_retry_missing_ingredients)) }
                                         }
                                     }
                                 ) {
-                                    Text(text = "Réessayer")
+                                    Text(text = stringResource(R.string.action_retry))
                                 }
                             }
                         }

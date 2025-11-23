@@ -1,3 +1,61 @@
 <resources>
     <string name="app_name">VibeChef</string>
+    <!-- Titres / App -->
+    <string name="title_app">VibeChef</string>
+    <string name="fallback_recipe_title">Recette</string>
+    <string name="title_restrictions">Restrictions</string>
+
+    <!-- Champs / Labels / Placeholders -->
+    <string name="label_ingredients">Ingrédients</string>
+    <string name="placeholder_ingredients">Ex: poulet, tomates, basilic…</string>
+
+    <!-- Boutons / Actions -->
+    <string name="btn_cook">Cuisiner !</string>
+    <string name="action_share">Partager</string>
+    <string name="action_retry">Réessayer</string>
+    <string name="action_copy">Copier</string>
+    <string name="action_dictate">Dicter</string>
+
+    <!-- Toggle thème -->
+    <string name="toggle_light">Passer en thème clair</string>
+    <string name="toggle_dark">Passer en thème sombre</string>
+
+    <!-- États / Messages -->
+    <string name="status_no_recipe">Aucune recette générée pour le moment.</string>
+    <string name="status_loading">Génération en cours…</string>
+    <string name="status_error">Erreur: %s</string>
+    <string name="msg_initial_instructions">Entrez des ingrédients, choisissez une ambiance et des restrictions.</string>
+    <string name="loading_thinking">Le chef réfléchit…</string>
+
+    <!-- Snackbar / Feedback -->
+    <string name="snackbar_recipe_copied">Recette copiée dans le presse-papiers</string>
+    <string name="snackbar_no_speech_text">Aucun texte reconnu</string>
+    <string name="snackbar_speech_cancelled">Dictée annulée</string>
+    <string name="snackbar_speech_unavailable">Reconnaissance vocale non disponible</string>
+    <string name="snackbar_retry_missing_ingredients">Veuillez saisir des ingrédients pour réessayer.</string>
+
+    <!-- Speech -->
+    <string name="speech_prompt">Dictez vos ingrédients</string>
+
+    <!-- Chips filtres -->
+    <string name="filter_vegetarian">Végétarien</string>
+    <string name="filter_gluten_free">Sans Gluten</string>
+    <string name="filter_spicy">Épicé</string>
+
+    <!-- Vibes -->
+    <string name="vibe_fast">Rapide</string>
+    <string name="vibe_gourmet">Gourmet</string>
+    <string name="vibe_fun">Fun</string>
+
+    <!-- Content descriptions -->
+    <string name="desc_theme_toggle_light">Passer en thème clair</string>
+    <string name="desc_theme_toggle_dark">Passer en thème sombre</string>
+    <string name="desc_share">Partager la recette</string>
+    <string name="desc_share_full">Partager la recette</string>
+    <string name="desc_copy_recipe">Copier</string>
+    <string name="desc_mic">Dicter</string>
+    <string name="desc_loading_icon">Chargement</string>
+    <string name="desc_error_icon">Erreur</string>
+    <string name="desc_header_image">Illustration de la recette</string>
+
 </resources>
