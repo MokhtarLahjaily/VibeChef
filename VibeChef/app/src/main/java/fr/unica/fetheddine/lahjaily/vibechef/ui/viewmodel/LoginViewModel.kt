@@ -4,6 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import fr.unica.fetheddine.lahjaily.vibechef.data.AuthRepository
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -75,6 +78,15 @@ class LoginViewModel(private val authRepository: AuthRepository = AuthRepository
         return valid
     }
 
+    private fun getFriendlyErrorMessage(e: Throwable): String {
+        return when (e) {
+            is FirebaseAuthInvalidUserException -> "Ce compte n'existe pas. Veuillez créer un compte."
+            is FirebaseAuthInvalidCredentialsException -> "Email ou mot de passe incorrect."
+            is FirebaseAuthUserCollisionException -> "Cet email est déjà utilisé."
+            else -> "Erreur de connexion. Vérifiez votre réseau ou réessayez."
+        }
+    }
+
     fun signIn() {
         if (!validate()) return
         val email = _formState.value.email.trim()
@@ -85,7 +97,7 @@ class LoginViewModel(private val authRepository: AuthRepository = AuthRepository
             result.onSuccess { user ->
                 _authState.value = AuthUiState.Authenticated(user)
             }.onFailure { e ->
-                _authState.value = AuthUiState.Error(e.message ?: "Erreur inconnue")
+                _authState.value = AuthUiState.Error(getFriendlyErrorMessage(e))
             }
         }
     }
@@ -100,7 +112,7 @@ class LoginViewModel(private val authRepository: AuthRepository = AuthRepository
             result.onSuccess { user ->
                 _authState.value = AuthUiState.Authenticated(user)
             }.onFailure { e ->
-                _authState.value = AuthUiState.Error(e.message ?: "Erreur inconnue")
+                _authState.value = AuthUiState.Error(getFriendlyErrorMessage(e))
             }
         }
     }
