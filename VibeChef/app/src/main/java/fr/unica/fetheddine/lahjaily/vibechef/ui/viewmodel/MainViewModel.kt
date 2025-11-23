@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import fr.unica.fetheddine.lahjaily.vibechef.data.FirestoreRepository
 import fr.unica.fetheddine.lahjaily.vibechef.data.model.Recipe
+import kotlinx.coroutines.flow.update
 
 // 1. Sealed interface pour représenter les états de l'UI
 sealed interface UiState {
@@ -35,6 +36,9 @@ class MainViewModel(
 
     private val _selectedRecipe = MutableStateFlow<Recipe?>(null)
     val selectedRecipe = _selectedRecipe.asStateFlow()
+
+    private val _isDarkMode = MutableStateFlow(false)
+    val isDarkMode = _isDarkMode.asStateFlow()
 
     /**
      * Lance la génération de recette via le repository avec timeout et logs.
@@ -94,4 +98,6 @@ class MainViewModel(
     fun getUserHistory(userId: String) = firestoreRepository.getRecipes(userId)
 
     fun selectRecipe(recipe: Recipe) { _selectedRecipe.value = recipe }
+
+    fun toggleTheme() { _isDarkMode.update { !it } }
 }
