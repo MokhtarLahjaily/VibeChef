@@ -1,5 +1,6 @@
 package fr.unica.fetheddine.lahjaily.vibechef.ui.viewmodel
 
+import android.graphics.Bitmap
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -35,13 +36,21 @@ class MainViewModel(
     /**
      * Lance la génération de recette via le repository avec timeout et logs.
      */
-    fun generateRecipe(ingredients: String, vibe: String, filters: List<String> = emptyList()) {
+    fun generateRecipe(
+        ingredients: String,
+        vibe: String,
+        filters: List<String> = emptyList(),
+        images: List<Bitmap> = emptyList()
+    ) {
         viewModelScope.launch {
             _uiState.value = UiState.Loading
-            Log.d("VibeChefDebug", "Début de la génération pour $ingredients | vibe=$vibe | filters=${filters.joinToString()}")
+            Log.d(
+                "VibeChefDebug",
+                "Début de la génération pour $ingredients | vibe=$vibe | filters=${filters.joinToString()} | images=${images.size}"
+            )
             try {
                 val recipeContent = withTimeout(30_000L) {
-                    geminiRepository.generateRecipe(ingredients, vibe, filters)
+                    geminiRepository.generateRecipe(ingredients, vibe, filters, images)
                 }
                 Log.d("VibeChefDebug", "Recette reçue !")
                 _uiState.value = UiState.Success(recipeContent)

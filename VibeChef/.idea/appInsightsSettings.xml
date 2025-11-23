@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="fr.unica.fetheddine.lahjaily.vibechef" />
+                  <option name="mobileSdkAppId" value="1:469605561178:android:2fee6f138be8ed1e247963" />
+                  <option name="projectId" value="recipeeapp-edd8b" />
+                  <option name="projectNumber" value="469605561178" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

@@ -1,8 +1,10 @@
 package fr.unica.fetheddine.lahjaily.vibechef.data
 
+import android.graphics.Bitmap
 import fr.unica.fetheddine.lahjaily.vibechef.BuildConfig
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.generationConfig
+import com.google.ai.client.generativeai.type.content
 
 class GeminiRepository {
 
@@ -15,14 +17,15 @@ class GeminiRepository {
     )
 
     /**
-     * Generates a recipe based on ingredients and a vibe.
-     *
-     * @param ingredients The ingredients for the recipe.
-     * @param vibe The vibe for the meal.
-     * @param filters The dietary restrictions or preferences.
-     * @return The generated recipe as a String.
+     * Génère une recette à partir d'ingrédients et d'une ambiance.
+     * Peut optionnellement utiliser plusieurs images pour détecter des ingrédients (multimodal).
      */
-    suspend fun generateRecipe(ingredients: String, vibe: String, filters: List<String>): String {
+    suspend fun generateRecipe(
+        ingredients: String,
+        vibe: String,
+        filters: List<String>,
+        images: List<Bitmap> = emptyList()
+    ): String {
         val restrictions = if (filters.isNotEmpty()) filters.joinToString(", ") else "Aucune"
         val constraintInstructions = StringBuilder()
         if (filters.any { it.contains("Végétarien", ignoreCase = true) }) {
@@ -35,9 +38,14 @@ class GeminiRepository {
             constraintInstructions.append("- \"Épicé\" => ajouter une chaleur modérée (piment, paprika fumé, piment d'Espelette) sans masquer les saveurs\n")
         }
 
+        val intro = if (images.isNotEmpty()) {
+            "Analyse attentivement ces images pour identifier tous les ingrédients visibles (légumes, viandes, etc.). Combine ces ingrédients visuels avec la liste textuelle suivante fournie par l'utilisateur : $ingredients."
+        } else {
+            "Tu es un chef cuisinier créatif. Crée une recette structurée en français avec ces ingrédients : $ingredients."
+        }
+
         val prompt = """
-            Tu es un chef cuisinier créatif.
-            Crée une recette structurée en français avec ces ingrédients : $ingredients
+            $intro
             Ambiance du repas : $vibe
             Restrictions / Contraintes: $restrictions
             
@@ -57,7 +65,11 @@ class GeminiRepository {
             N'ajoute aucune autre section (pas d'intro ni de conclusion).
         """.trimIndent()
 
-        val response = generativeModel.generateContent(prompt)
+        val inputContent = content {
+            images.forEach { image(it) }
+            text(prompt)
+        }
+        val response = generativeModel.generateContent(inputContent)
         return response.text ?: throw Exception("Réponse vide de l'IA")
     }
 }

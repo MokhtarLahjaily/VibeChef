@@ -2,52 +2,55 @@ package fr.unica.fetheddine.lahjaily.vibechef.ui
 
 import android.app.Activity
 import android.content.ActivityNotFoundException
-import android.content.Intent
 import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.content.Intent
+import android.graphics.Bitmap
 import android.speech.RecognizerIntent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.core.*
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.rounded.PhotoCamera
+import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import fr.unica.fetheddine.lahjaily.vibechef.R
 import fr.unica.fetheddine.lahjaily.vibechef.ui.viewmodel.MainViewModel
 import fr.unica.fetheddine.lahjaily.vibechef.ui.viewmodel.UiState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Brightness4
-import androidx.compose.material.icons.filled.Brightness7
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Save
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalClipboard
-import androidx.compose.ui.platform.ClipEntry
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
-import androidx.compose.material.icons.rounded.Warning
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import java.util.Locale
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,22 +60,30 @@ fun VibeChefScreen(
     onSignOut: () -> Unit,
     onNavigateToHistory: () -> Unit
 ) {
-    // Contexte accessible en premier pour init valeurs non @Composable
     val context = LocalContext.current
-    // State local pour les ingrédients et la vibe choisie
+
+    // Etats locaux
     var ingredients by remember { mutableStateOf("") }
     var selectedVibe by remember { mutableStateOf(context.getString(R.string.vibe_fast)) }
     var selectedFilters by remember { mutableStateOf(setOf<String>()) }
+
+    // Utilise mutableStateListOf pour que l'UI se mette à jour quand on ajoute/supprime
+    val capturedImages = remember { mutableStateListOf<Bitmap>() }
+
     val systemDark = isSystemInDarkTheme()
     var isDark by remember { mutableStateOf(systemDark) }
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-    val clipboard = LocalClipboard.current
-
     val keyboardController = LocalSoftwareKeyboardController.current
-    // Texte à partager basé sur l'état actuel (utilise context.getString pour éviter composable hors scope)
+
+    // Clipboard système (correction de l’erreur d’inférence de type)
+    val clipboard: ClipboardManager = remember(context) {
+        context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    }
+
+    // Texte partage selon état
     val shareText by remember(uiState) {
         derivedStateOf {
             when (val state = uiState) {
@@ -84,7 +95,7 @@ fun VibeChefScreen(
         }
     }
 
-    // Launcher pour la reconnaissance vocale
+    // Reconnaissance vocale
     val speechLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             val matches = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
@@ -98,13 +109,19 @@ fun VibeChefScreen(
             scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.snackbar_speech_cancelled)) }
         }
     }
-    // Intent pré-configuré pour la dictée (context.getString au lieu de stringResource)
     val speechIntent = remember {
         Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
             putExtra(RecognizerIntent.EXTRA_PROMPT, context.getString(R.string.speech_prompt))
         }
+    }
+
+    // Caméra (prévisualisation)
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicturePreview()
+    ) { bitmap ->
+        if (bitmap != null) capturedImages.add(bitmap)
     }
 
     val localColorScheme = remember(isDark) { if (isDark) darkColorScheme() else lightColorScheme() }
@@ -131,22 +148,13 @@ fun VibeChefScreen(
                                 Intent.createChooser(intent, context.getString(R.string.desc_share_full))
                             )
                         }) {
-                            Icon(
-                                imageVector = Icons.Filled.Share,
-                                contentDescription = stringResource(R.string.desc_share)
-                            )
+                            Icon(imageVector = Icons.Filled.Share, contentDescription = stringResource(R.string.desc_share))
                         }
                         IconButton(onClick = onNavigateToHistory) {
-                            Icon(
-                                imageVector = Icons.Filled.History,
-                                contentDescription = "Historique"
-                            )
+                            Icon(imageVector = Icons.Filled.History, contentDescription = "Historique")
                         }
                         IconButton(onClick = onSignOut) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                                contentDescription = stringResource(R.string.action_logout)
-                            )
+                            Icon(imageVector = Icons.AutoMirrored.Filled.ExitToApp, contentDescription = stringResource(R.string.action_logout))
                         }
                     }
                 )
@@ -160,10 +168,7 @@ fun VibeChefScreen(
                         }
                         context.startActivity(Intent.createChooser(intent, context.getString(R.string.desc_share_full)))
                     }) {
-                        Icon(
-                            imageVector = Icons.Filled.Share,
-                            contentDescription = stringResource(R.string.desc_share)
-                        )
+                        Icon(imageVector = Icons.Filled.Share, contentDescription = stringResource(R.string.desc_share))
                     }
                 }
             },
@@ -178,8 +183,6 @@ fun VibeChefScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-
-
                 OutlinedTextField(
                     value = ingredients,
                     onValueChange = { ingredients = it },
@@ -187,14 +190,20 @@ fun VibeChefScreen(
                     placeholder = { Text(stringResource(R.string.placeholder_ingredients)) },
                     modifier = Modifier.fillMaxWidth(),
                     trailingIcon = {
-                        IconButton(onClick = {
-                            try {
-                                speechLauncher.launch(speechIntent)
-                            } catch (_: ActivityNotFoundException) {
-                                scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.snackbar_speech_unavailable)) }
+                        Row {
+                            IconButton(onClick = { cameraLauncher.launch(null) }) {
+                                Icon(imageVector = Icons.Rounded.PhotoCamera, contentDescription = "Caméra")
                             }
-                        }) {
-                            Icon(imageVector = Icons.Filled.Mic, contentDescription = stringResource(R.string.action_dictate))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            IconButton(onClick = {
+                                try {
+                                    speechLauncher.launch(speechIntent)
+                                } catch (_: ActivityNotFoundException) {
+                                    scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.snackbar_speech_unavailable)) }
+                                }
+                            }) {
+                                Icon(imageVector = Icons.Filled.Mic, contentDescription = stringResource(R.string.action_dictate))
+                            }
                         }
                     }
                 )
@@ -207,7 +216,11 @@ fun VibeChefScreen(
                     )
                 }
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(text = stringResource(R.string.title_restrictions), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground)
+                    Text(
+                        text = stringResource(R.string.title_restrictions),
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -248,13 +261,51 @@ fun VibeChefScreen(
                     }
                 }
 
+                // Galerie d’images capturées (au-dessus du bouton Cuisiner)
+                if (capturedImages.isNotEmpty()) {
+                    LazyRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(capturedImages) { bmp ->
+                            Box(modifier = Modifier.size(100.dp)) {
+                                Card(
+                                    modifier = Modifier.matchParentSize(),
+                                    shape = RoundedCornerShape(12.dp)
+                                ) {
+                                    Image(
+                                        bitmap = bmp.asImageBitmap(),
+                                        contentDescription = "Photo capturée",
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                }
+                                IconButton(
+                                    onClick = { capturedImages.remove(bmp) },
+                                    modifier = Modifier.align(Alignment.TopEnd)
+                                ) {
+                                    Icon(imageVector = Icons.Filled.Close, contentDescription = "Supprimer")
+                                }
+                            }
+                        }
+                    }
+                }
+
                 Button(
                     onClick = {
                         keyboardController?.hide()
-                        if (ingredients.isNotBlank()) {
-                            viewModel.generateRecipe(ingredients, selectedVibe, selectedFilters.toList())
+                        val canGenerate = ingredients.isNotBlank() || capturedImages.isNotEmpty()
+                        if (canGenerate) {
+                            val ingredientsForCall = if (ingredients.isNotBlank()) ingredients else "Ingrédients détectés par l'IA"
+                            viewModel.generateRecipe(
+                                ingredientsForCall,
+                                selectedVibe,
+                                selectedFilters.toList(),
+                                images = capturedImages.toList()
+                            )
                         }
                     },
+                    enabled = ingredients.isNotBlank() || capturedImages.isNotEmpty(),
                     modifier = Modifier.align(Alignment.End)
                 ) {
                     Text(stringResource(R.string.btn_cook))
@@ -274,7 +325,7 @@ fun VibeChefScreen(
                             initialValue = 0.9f,
                             targetValue = 1.1f,
                             animationSpec = infiniteRepeatable(
-                                animation = tween(durationMillis = 800, easing = { it }),
+                                animation = tween(durationMillis = 800),
                                 repeatMode = RepeatMode.Reverse
                             ),
                             label = "iconScale"
@@ -283,7 +334,7 @@ fun VibeChefScreen(
                             initialValue = 0.3f,
                             targetValue = 1f,
                             animationSpec = infiniteRepeatable(
-                                animation = tween(durationMillis = 1200, easing = { it }),
+                                animation = tween(durationMillis = 1200),
                                 repeatMode = RepeatMode.Reverse
                             ),
                             label = "textAlpha"
@@ -341,14 +392,12 @@ fun VibeChefScreen(
                                         viewModel.saveCurrentRecipe(userId)
                                         scope.launch { snackbarHostState.showSnackbar("Recette sauvegardée dans l'historique !") }
                                     }) {
-                                        Icon(imageVector = Icons.Filled.Save, contentDescription = "Sauvegarder")
+                                        Icon(imageVector = Icons.Filled.BookmarkAdd, contentDescription = "Ajouter aux favoris")
                                     }
                                     IconButton(onClick = {
-                                        scope.launch {
-                                            val clipData = ClipData.newPlainText("recipe", state.recipe)
-                                            clipboard.setClipEntry(ClipEntry(clipData))
-                                            snackbarHostState.showSnackbar(context.getString(R.string.snackbar_recipe_copied))
-                                        }
+                                        val clip = ClipData.newPlainText("recipe", state.recipe)
+                                        clipboard.setPrimaryClip(clip)
+                                        scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.snackbar_recipe_copied)) }
                                     }) {
                                         Icon(imageVector = Icons.Filled.ContentCopy, contentDescription = stringResource(R.string.action_copy))
                                     }
@@ -386,8 +435,15 @@ fun VibeChefScreen(
                                 Spacer(modifier = Modifier.height(16.dp))
                                 OutlinedButton(
                                     onClick = {
-                                        if (ingredients.isNotBlank()) {
-                                            viewModel.generateRecipe(ingredients, selectedVibe, selectedFilters.toList())
+                                        val canGenerate = ingredients.isNotBlank() || capturedImages.isNotEmpty()
+                                        if (canGenerate) {
+                                            val ingredientsForCall = if (ingredients.isNotBlank()) ingredients else "Ingrédients détectés par l'IA"
+                                            viewModel.generateRecipe(
+                                                ingredientsForCall,
+                                                selectedVibe,
+                                                selectedFilters.toList(),
+                                                images = capturedImages.toList()
+                                            )
                                         } else {
                                             scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.snackbar_retry_missing_ingredients)) }
                                         }
@@ -404,7 +460,7 @@ fun VibeChefScreen(
     }
 }
 
-
+// Rendu Markdown léger (### titre, **gras**)
 @Composable
 private fun MarkdownText(text: String, modifier: Modifier = Modifier) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -413,7 +469,7 @@ private fun MarkdownText(text: String, modifier: Modifier = Modifier) {
             val line = rawLine.trimEnd()
             when {
                 line.startsWith("# ") -> {
-                    // On ignore le titre principal car il est affiché dans le header de la Card
+                    // Titre principal déjà affiché au-dessus
                 }
                 line.startsWith("### ") -> {
                     val title = line.removePrefix("### ").trim()
@@ -440,7 +496,6 @@ private fun MarkdownText(text: String, modifier: Modifier = Modifier) {
 
 @Composable
 private fun buildBoldAnnotated(input: String): AnnotatedString {
-    // Parse très basique du gras **...** sans gestion des échappements complexes
     val regex = Regex("\\*\\*(.+?)\\*\\*")
     return buildAnnotatedString {
         var lastIndex = 0
