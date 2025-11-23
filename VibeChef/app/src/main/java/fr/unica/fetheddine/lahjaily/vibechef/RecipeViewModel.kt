@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 
 class RecipeViewModel(
     private val generativeModel: GenerativeModel = GenerativeModel(
-        modelName = "gemini-pro",
+        modelName = "gemini-2.5-flash",
         apiKey = BuildConfig.API_KEY
     )
 ) : ViewModel() {

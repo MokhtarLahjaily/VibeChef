@@ -1,11 +1,14 @@
 package fr.unica.fetheddine.lahjaily.vibechef.ui.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import fr.unica.fetheddine.lahjaily.vibechef.data.GeminiRepository
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 
 // 1. Sealed interface pour représenter les états de l'UI
 sealed interface UiState {
@@ -27,21 +30,23 @@ class MainViewModel(
     val uiState = _uiState.asStateFlow()
 
     /**
-     * Lance la génération de recette via le repository.
-     * Met à jour l'UiState pour refléter le chargement, le succès ou l'erreur.
+     * Lance la génération de recette via le repository avec timeout et logs.
      */
-    fun generateRecipe(ingredients: String, vibe: String, filters: List<String>) {
-        // 4. Utilise viewModelScope pour lancer une coroutine liée au cycle de vie du ViewModel
+    fun generateRecipe(ingredients: String, vibe: String, filters: List<String> = emptyList()) {
         viewModelScope.launch {
-            // Met l'état à Loading avant de commencer l'appel réseau
             _uiState.value = UiState.Loading
+            Log.d("VibeChefDebug", "Début de la génération pour $ingredients | vibe=$vibe | filters=${filters.joinToString()}")
             try {
-                // Appelle la fonction suspend du repository
-                val recipe = geminiRepository.generateRecipe(ingredients, vibe, filters)
-                // Met à jour l'état avec le résultat en cas de succès
+                val recipe = withTimeout(30_000L) {
+                    geminiRepository.generateRecipe(ingredients, vibe, filters)
+                }
+                Log.d("VibeChefDebug", "Recette reçue !")
                 _uiState.value = UiState.Success(recipe)
+            } catch (e: TimeoutCancellationException) {
+                Log.e("VibeChefDebug", "Timeout !")
+                _uiState.value = UiState.Error("Le chef met trop de temps à répondre (Timeout). Vérifie ta connexion.")
             } catch (e: Exception) {
-                // Met à jour l'état avec le message d'erreur en cas d'échec
+                Log.e("VibeChefDebug", "Erreur : ${e.message}")
                 _uiState.value = UiState.Error(e.message ?: "Erreur inconnue")
             }
         }
