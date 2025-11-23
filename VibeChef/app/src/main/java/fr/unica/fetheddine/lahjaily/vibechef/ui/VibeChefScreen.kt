@@ -1,6 +1,11 @@
 package fr.unica.fetheddine.lahjaily.vibechef.ui
 
+import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.speech.RecognizerIntent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -20,6 +25,7 @@ import fr.unica.fetheddine.lahjaily.vibechef.ui.viewmodel.UiState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalClipboardManager
 
@@ -27,6 +33,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 import androidx.compose.material.icons.rounded.Warning
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,6 +55,29 @@ fun VibeChefScreen(viewModel: MainViewModel) {
         UiState.Initial -> "Aucune recette générée pour le moment."
         UiState.Loading -> "Génération en cours..."
         is UiState.Error -> "Erreur: ${state.message}"
+    }
+
+    // Launcher pour la reconnaissance vocale
+    val speechLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val matches = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+            val spokenText = matches?.firstOrNull()
+            if (!spokenText.isNullOrBlank()) {
+                ingredients = spokenText
+            } else {
+                scope.launch { snackbarHostState.showSnackbar("Aucun texte reconnu") }
+            }
+        } else {
+            scope.launch { snackbarHostState.showSnackbar("Dictée annulée") }
+        }
+    }
+    // Intent pré-configuré pour la dictée
+    val speechIntent = remember {
+        Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+            putExtra(RecognizerIntent.EXTRA_PROMPT, "Dictez vos ingrédients")
+        }
     }
 
     Scaffold(
@@ -109,7 +139,18 @@ fun VibeChefScreen(viewModel: MainViewModel) {
                 onValueChange = { ingredients = it },
                 label = { Text("Ingrédients") },
                 placeholder = { Text("Ex: poulet, tomates, basilic...") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                trailingIcon = {
+                    IconButton(onClick = {
+                        try {
+                            speechLauncher.launch(speechIntent)
+                        } catch (e: ActivityNotFoundException) {
+                            scope.launch { snackbarHostState.showSnackbar("Reconnaissance vocale non disponible") }
+                        }
+                    }) {
+                        Icon(imageVector = Icons.Filled.Mic, contentDescription = "Dicter")
+                    }
+                }
             )
 
             // Restrictions chips multi-sélection
