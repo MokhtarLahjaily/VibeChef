@@ -15,6 +15,7 @@
     <string name="action_retry">Réessayer</string>
     <string name="action_copy">Copier</string>
     <string name="action_dictate">Dicter</string>
+    <string name="action_logout">Déconnexion</string>
 
     <!-- Toggle thème -->
     <string name="toggle_light">Passer en thème clair</string>
@@ -58,4 +59,18 @@
     <string name="desc_error_icon">Erreur</string>
     <string name="desc_header_image">Illustration de la recette</string>
 
+    <!-- Authentification -->
+    <string name="login_title">Connexion</string>
+    <string name="login_subtitle">Entrez vos identifiants pour continuer</string>
+    <string name="signup_title">Créer un compte</string>
+    <string name="signup_subtitle">Renseignez vos informations pour commencer</string>
+    <string name="label_email">Email</string>
+    <string name="label_password">Mot de passe</string>
+    <string name="auth_action_sign_in">Se connecter</string>
+    <string name="auth_action_sign_up">S\'inscrire</string>
+    <string name="prompt_no_account">Pas de compte ? Inscrivez-vous</string>
+    <string name="prompt_have_account">Vous avez déjà un compte ? Connectez-vous</string>
+    <string name="show_password">Afficher le mot de passe</string>
+    <string name="hide_password">Masquer le mot de passe</string>
+    <string name="action_forgot_password">Mot de passe oublié ?</string>
 </resources>

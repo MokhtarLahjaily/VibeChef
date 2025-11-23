@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "469605561178",
+    "project_id": "recipeeapp-edd8b",
+    "storage_bucket": "recipeeapp-edd8b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:469605561178:android:2fee6f138be8ed1e247963",
+        "android_client_info": {
+          "package_name": "fr.unica.fetheddine.lahjaily.vibechef"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDSWJqgVo9OvQr7rc21FK0ebCVkCeCi3jA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

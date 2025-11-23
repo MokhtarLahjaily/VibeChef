@@ -25,6 +25,8 @@ import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Brightness4
 import androidx.compose.material.icons.filled.Brightness7
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -45,7 +47,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun VibeChefScreen(viewModel: MainViewModel) {
+fun VibeChefScreen(viewModel: MainViewModel, onSignOut: () -> Unit) {
     // Contexte accessible en premier pour init valeurs non @Composable
     val context = LocalContext.current
     // State local pour les ingrédients et la vibe choisie
@@ -125,6 +127,12 @@ fun VibeChefScreen(viewModel: MainViewModel) {
                                 contentDescription = stringResource(R.string.desc_share)
                             )
                         }
+                        IconButton(onClick = onSignOut) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                                contentDescription = stringResource(R.string.action_logout)
+                            )
+                        }
                     }
                 )
             },
@@ -155,13 +163,7 @@ fun VibeChefScreen(viewModel: MainViewModel) {
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text(
-                    text = stringResource(R.string.title_app),
-                    style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
+
 
                 OutlinedTextField(
                     value = ingredients,
@@ -202,7 +204,10 @@ fun VibeChefScreen(viewModel: MainViewModel) {
                                 onClick = {
                                     selectedFilters = if (selected) selectedFilters - opt else selectedFilters + opt
                                 },
-                                label = { Text(opt) }
+                                label = { Text(opt) },
+                                leadingIcon = if (selected) {
+                                    { Icon(imageVector = Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                                } else null
                             )
                         }
                     }
