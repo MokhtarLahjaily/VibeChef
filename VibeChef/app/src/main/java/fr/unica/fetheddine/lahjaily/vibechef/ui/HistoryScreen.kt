@@ -1,5 +1,6 @@
 package fr.unica.fetheddine.lahjaily.vibechef.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -13,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import fr.unica.fetheddine.lahjaily.vibechef.data.model.Recipe
 import fr.unica.fetheddine.lahjaily.vibechef.ui.viewmodel.MainViewModel
 import java.text.SimpleDateFormat
 import java.util.*
@@ -22,7 +24,8 @@ import java.util.*
 fun HistoryScreen(
     viewModel: MainViewModel,
     userId: String,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onRecipeClick: (Recipe) -> Unit
 ) {
     val history by viewModel.getUserHistory(userId).collectAsState(initial = emptyList())
 
@@ -50,7 +53,9 @@ fun HistoryScreen(
             ) {
                 items(history) { recipe ->
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onRecipeClick(recipe) },
                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {

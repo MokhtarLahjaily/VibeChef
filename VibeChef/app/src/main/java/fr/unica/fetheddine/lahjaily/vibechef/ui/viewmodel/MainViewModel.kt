@@ -33,6 +33,9 @@ class MainViewModel(
     // StateFlow public et immuable exposé à l'UI
     val uiState = _uiState.asStateFlow()
 
+    private val _selectedRecipe = MutableStateFlow<Recipe?>(null)
+    val selectedRecipe = _selectedRecipe.asStateFlow()
+
     /**
      * Lance la génération de recette via le repository avec timeout et logs.
      */
@@ -89,4 +92,6 @@ class MainViewModel(
     }
 
     fun getUserHistory(userId: String) = firestoreRepository.getRecipes(userId)
+
+    fun selectRecipe(recipe: Recipe) { _selectedRecipe.value = recipe }
 }

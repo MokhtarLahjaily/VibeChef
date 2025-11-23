@@ -10,8 +10,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import fr.unica.fetheddine.lahjaily.vibechef.ui.AuthScreen
 import fr.unica.fetheddine.lahjaily.vibechef.ui.HistoryScreen
+import fr.unica.fetheddine.lahjaily.vibechef.ui.RecipeDetailScreen
 import fr.unica.fetheddine.lahjaily.vibechef.ui.VibeChefScreen
-import fr.unica.fetheddine.lahjaily.vibechef.ui.viewmodel.AuthUiState
 import fr.unica.fetheddine.lahjaily.vibechef.ui.viewmodel.LoginViewModel
 import fr.unica.fetheddine.lahjaily.vibechef.ui.viewmodel.MainViewModel
 
@@ -19,6 +19,7 @@ sealed class Screen(val route: String) {
     data object Login : Screen("login")
     data object Home : Screen("home")
     data object History : Screen("history")
+    data object Detail : Screen("detail")
 }
 
 @Composable
@@ -68,8 +69,23 @@ fun AppNavigation(
                 HistoryScreen(
                     viewModel = vibeChefViewModel,
                     userId = user.uid,
+                    onBack = { navController.popBackStack() },
+                    onRecipeClick = { recipe ->
+                        vibeChefViewModel.selectRecipe(recipe)
+                        navController.navigate(Screen.Detail.route)
+                    }
+                )
+            }
+        }
+        composable(Screen.Detail.route) {
+            val selected by vibeChefViewModel.selectedRecipe.collectAsState()
+            if (selected != null) {
+                RecipeDetailScreen(
+                    recipe = selected!!,
                     onBack = { navController.popBackStack() }
                 )
+            } else {
+                Text("Aucune recette sélectionnée")
             }
         }
     }

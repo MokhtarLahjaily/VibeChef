@@ -47,6 +47,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import fr.unica.fetheddine.lahjaily.vibechef.R
+import fr.unica.fetheddine.lahjaily.vibechef.ui.components.MarkdownText
 import fr.unica.fetheddine.lahjaily.vibechef.ui.viewmodel.MainViewModel
 import fr.unica.fetheddine.lahjaily.vibechef.ui.viewmodel.UiState
 import kotlinx.coroutines.launch
@@ -456,60 +457,6 @@ fun VibeChefScreen(
                     }
                 }
             }
-        }
-    }
-}
-
-// Rendu Markdown léger (### titre, **gras**)
-@Composable
-private fun MarkdownText(text: String, modifier: Modifier = Modifier) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        val lines = remember(text) { text.lines() }
-        lines.forEach { rawLine ->
-            val line = rawLine.trimEnd()
-            when {
-                line.startsWith("# ") -> {
-                    // Titre principal déjà affiché au-dessus
-                }
-                line.startsWith("### ") -> {
-                    val title = line.removePrefix("### ").trim()
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-                line.isBlank() -> {
-                    Spacer(modifier = Modifier.height(4.dp))
-                }
-                else -> {
-                    Text(
-                        text = buildBoldAnnotated(line),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun buildBoldAnnotated(input: String): AnnotatedString {
-    val regex = Regex("\\*\\*(.+?)\\*\\*")
-    return buildAnnotatedString {
-        var lastIndex = 0
-        regex.findAll(input).forEach { match ->
-            val start = match.range.first
-            val end = match.range.last + 1
-            append(input.substring(lastIndex, start))
-            pushStyle(SpanStyle(fontWeight = FontWeight.Bold))
-            append(match.groupValues[1])
-            pop()
-            lastIndex = end
-        }
-        if (lastIndex < input.length) {
-            append(input.substring(lastIndex))
         }
     }
 }
