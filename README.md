@@ -12,38 +12,37 @@ Ce TD est à faire en groupe de 2 ou 3 personnes.
 - Mohamed Mokhtar Lahjaily
 
 ### Objectifs atteints
-- Implémentation d’une génération de recettes via l’IA Gemini (Google Generative AI).
-- Intégration de Firebase Firestore pour la sauvegarde et l’historique des recettes par utilisateur.
-- Ajout d’une interface riche avec Jetpack Compose : boutons de génération, sauvegarde, historique, partage, copie, reconnaissance vocale et capture d’images.
-- Fonction de dictée vocale permettant de saisir les ingrédients par la voix.
-- Gestion de l’authentification (login / signup) avec Firebase Auth.
-- Navigation complète (Login → Home → Historique → Détail) via Navigation‑Compose.
-- Support du mode sombre, animations, icônes premium et design moderne.
+- Implémentation d’une génération de recettes via l’API **Gemini** (Google Generative AI).
+- Intégration de **Firebase Firestore** pour la sauvegarde et l’historique des recettes par utilisateur.
+- Interface moderne avec **Jetpack Compose** : génération de recettes, sauvegarde, historique, partage et copie dans le presse-papiers.
+- Fonction de **dictée vocale** (Speech-to-Text) permettant de saisir les ingrédients par la voix.
+- Gestion de l’authentification (Connexion / Inscription) avec **Firebase Auth**.
+- Navigation fluide (Login ↔ Home ↔ Historique) via **Navigation-Compose**.
+- Support du mode sombre (Dark Mode) et gestion des états d'UI (Loading, Success, Error).
 
 ### Comment l'IA a été ajoutée
-1. *Dépendances* : dans gradle/libs.versions.toml nous avons ajouté :
-   toml
-   generative-ai = { group = "com.google.firebase", name = "generative-ai", version = "0.2.0" }
-   coil-compose = { group = "io.coil-kt", name = "coil-compose", version = "2.5.0" }
-   
-   et dans app/build.gradle.kts :
-   kotlin
-   implementation(libs.generative.ai)
-   implementation(libs.coil.compose)
-   
-2. *Repository IA* : création de GeminiRepository.kt qui construit le prompt, gère les filtres et accepte des images (generateRecipe(..., images: List<Bitmap>)).
-       val id: String = "",
-       val userId: String = "",
-       val title: String = "",
-       val content: String = "",
-       val timestamp: Long = System.currentTimeMillis()
-   )
-   ```
-   ```kotlin
-   // Exemple d’appel depuis le ViewModel
-   firestoreRepository.saveRecipe(userId, recipe)
-   ```
 
+1. **Dépendances** : 
+   Dans `gradle/libs.versions.toml`, nous avons ajouté le SDK Google AI Client :
+   ```toml
+   generative-ai = { group = "com.google.ai.client.generativeai", name = "generativeai", version.ref = "generativeai" }
+   ```
+   et dans app/build.gradle.kts :
+   ```kotlin
+   implementation(libs.generative.ai)
+   ```
+   
+2. *Repository IA* Repository IA (GeminiRepository.kt) : Nous avons créé une classe qui configure le modèle gemini-2.5-flash. La fonction principale generateRecipe construit un prompt structuré incluant les ingrédients, l'ambiance ("Vibe") et les restrictions alimentaires, pour générer une réponse formatée en Markdown.
+
+   ```kotlin
+   suspend fun generateRecipe(ingredients: String, vibe: String, filters: List<String>): String {
+    // Construction du prompt et appel à l'API
+    val response = generativeModel.generateContent(prompt)
+    return response.text ?: throw Exception("Réponse vide")
+   }
+   ```
+ 3. Intégration UI (MainViewModel.kt) : Le ViewModel appelle ce repository de manière asynchrone (Coroutines) et expose le résultat via un StateFlow pour que l'interface s'adapte automatiquement (chargement, affichage de la recette).
+ 
 Ces ajouts permettent à l’application VibeChef de générer des recettes créatives grâce à l’IA, de les sauvegarder et de les consulter ultérieurement, tout en offrant une expérience utilisateur moderne et fluide.
 
 ### Liens vers la vidéo
