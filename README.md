@@ -47,5 +47,5 @@ Ces ajouts permettent à l’application VibeChef de générer des recettes cré
 
 ### Liens vers la vidéo
 
-Voir [vidéo démonstrative]([https://www.youtube.com/shorts/zgxqGORrfo8](https://www.youtube.com/watch?v=UJYe2OhJL50))
+Voir [vidéo démonstrative](https://www.youtube.com/watch?v=UJYe2OhJL50)
 
