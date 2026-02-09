@@ -5,9 +5,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import fr.unica.fetheddine.lahjaily.vibechef.R
 import fr.unica.fetheddine.lahjaily.vibechef.ui.AuthScreen
 import fr.unica.fetheddine.lahjaily.vibechef.ui.HistoryScreen
 import fr.unica.fetheddine.lahjaily.vibechef.ui.RecipeDetailScreen
@@ -79,13 +81,17 @@ fun AppNavigation(
         }
         composable(Screen.Detail.route) {
             val selected by vibeChefViewModel.selectedRecipe.collectAsState()
+            val user = loginViewModel.currentUser
             if (selected != null) {
                 RecipeDetailScreen(
                     recipe = selected!!,
-                    onBack = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
+                    onDelete = if (user != null) {
+                        { vibeChefViewModel.deleteRecipe(user.uid, selected!!.id) }
+                    } else null
                 )
             } else {
-                Text("Aucune recette sélectionnée")
+                Text(stringResource(R.string.detail_no_recipe))
             }
         }
     }

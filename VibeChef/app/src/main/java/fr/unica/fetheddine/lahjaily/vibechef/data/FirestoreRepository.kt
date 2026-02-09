@@ -34,4 +34,9 @@ class FirestoreRepository {
         }
         awaitClose { subscription.remove() }
     }
+
+    suspend fun deleteRecipe(userId: String, recipeId: String) {
+        db.collection("users").document(userId).collection("recipes")
+            .document(recipeId).delete().await()
+    }
 }

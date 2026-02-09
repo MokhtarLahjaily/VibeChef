@@ -1,8 +1,9 @@
 package fr.unica.fetheddine.lahjaily.vibechef.ui.viewmodel
 
+import android.app.Application
 import android.graphics.Bitmap
 import android.util.Log
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import fr.unica.fetheddine.lahjaily.vibechef.data.GeminiRepository
 import kotlinx.coroutines.TimeoutCancellationException
@@ -24,20 +25,21 @@ sealed interface UiState {
 
 // 2. ViewModel pour orchestrer la logique
 class MainViewModel(
-    // Injection de dépendance pour le repository
+    application: Application,
     private val geminiRepository: GeminiRepository = GeminiRepository(),
     private val firestoreRepository: FirestoreRepository = FirestoreRepository()
-) : ViewModel() {
+) : AndroidViewModel(application) {
+
+    private val prefs = application.getSharedPreferences("vibechef_prefs", 0)
 
     // 3. StateFlow privé et mutable pour gérer l'état en interne
     private val _uiState = MutableStateFlow<UiState>(UiState.Initial)
-    // StateFlow public et immuable exposé à l'UI
     val uiState = _uiState.asStateFlow()
 
     private val _selectedRecipe = MutableStateFlow<Recipe?>(null)
     val selectedRecipe = _selectedRecipe.asStateFlow()
 
-    private val _isDarkMode = MutableStateFlow(false)
+    private val _isDarkMode = MutableStateFlow(prefs.getBoolean("dark_mode", false))
     val isDarkMode = _isDarkMode.asStateFlow()
 
     /**
@@ -99,5 +101,22 @@ class MainViewModel(
 
     fun selectRecipe(recipe: Recipe) { _selectedRecipe.value = recipe }
 
-    fun toggleTheme() { _isDarkMode.update { !it } }
+    fun deleteRecipe(userId: String, recipeId: String) {
+        viewModelScope.launch {
+            try {
+                firestoreRepository.deleteRecipe(userId, recipeId)
+                Log.d("VibeChefDebug", "Recette supprimée: $recipeId")
+            } catch (e: Exception) {
+                Log.e("VibeChefDebug", "Erreur suppression : ${e.message}")
+            }
+        }
+    }
+
+    fun toggleTheme() {
+        _isDarkMode.update { current ->
+            val newValue = !current
+            prefs.edit().putBoolean("dark_mode", newValue).apply()
+            newValue
+        }
+    }
 }

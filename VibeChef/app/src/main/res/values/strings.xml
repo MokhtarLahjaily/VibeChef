@@ -17,6 +17,10 @@
     <string name="action_dictate">Dicter</string>
     <string name="action_logout">Déconnexion</string>
 
+    <!-- History -->
+    <string name="action_history">Historique</string>
+    <string name="action_camera">Caméra</string>
+
     <!-- Toggle thème -->
     <string name="toggle_light">Passer en thème clair</string>
     <string name="toggle_dark">Passer en thème sombre</string>
@@ -30,6 +34,7 @@
 
     <!-- Snackbar / Feedback -->
     <string name="snackbar_recipe_copied">Recette copiée dans le presse-papiers</string>
+    <string name="snackbar_recipe_saved">Recette sauvegardée dans l\'historique !</string>
     <string name="snackbar_no_speech_text">Aucun texte reconnu</string>
     <string name="snackbar_speech_cancelled">Dictée annulée</string>
     <string name="snackbar_speech_unavailable">Reconnaissance vocale non disponible</string>
@@ -73,4 +78,22 @@
     <string name="show_password">Afficher le mot de passe</string>
     <string name="hide_password">Masquer le mot de passe</string>
     <string name="action_forgot_password">Mot de passe oublié ?</string>
+
+    <!-- History screen -->
+    <string name="history_title">Historique</string>
+    <string name="history_empty">Aucune recette sauvegardée pour le moment.</string>
+    <string name="history_date_prefix">Générée le %s</string>
+    <string name="action_back">Retour</string>
+
+    <!-- Detail screen -->
+    <string name="detail_title">Détails</string>
+    <string name="detail_no_recipe">Aucune recette sélectionnée</string>
+
+    <!-- Delete -->
+    <string name="action_delete">Supprimer</string>
+    <string name="delete_confirm_title">Supprimer cette recette ?</string>
+    <string name="delete_confirm_message">Cette action est irréversible.</string>
+    <string name="delete_confirm_yes">Supprimer</string>
+    <string name="delete_confirm_no">Annuler</string>
+    <string name="snackbar_recipe_deleted">Recette supprimée</string>
 </resources>
