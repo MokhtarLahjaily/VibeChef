@@ -8,11 +8,11 @@ plugins {
 }
 
 android {
-    namespace = "fr.unica.fetheddine.lahjaily.vibechef"
+    namespace = "com.lahjaily.vibechef"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "fr.unica.fetheddine.lahjaily.vibechef"
+        applicationId = "com.lahjaily.vibechef"
         minSdk = 28
         targetSdk = 36
         versionCode = 1
