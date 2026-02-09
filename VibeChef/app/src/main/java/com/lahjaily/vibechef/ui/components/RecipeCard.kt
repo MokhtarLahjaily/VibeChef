@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.lahjaily.vibechef.R
 import kotlinx.coroutines.launch
 
 @Composable
@@ -35,7 +36,7 @@ fun RecipeCard(
 
     val lines = remember(recipe) { recipe.lines() }
     val title: String = lines.firstOrNull { it.startsWith("# ") }?.removePrefix("# ")
-        ?.trim().orEmpty().ifBlank { "Recette" }
+        ?.trim().orEmpty().ifBlank { context.getString(R.string.fallback_recipe_title) }
 
     Card(
         modifier = modifier
@@ -64,18 +65,18 @@ fun RecipeCard(
                 }) {
                     Icon(
                         imageVector = Icons.Filled.BookmarkAdd,
-                        contentDescription = "Sauvegarder",
+                        contentDescription = context.getString(R.string.snackbar_recipe_saved),
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }
                 IconButton(onClick = {
                     val clip = ClipData.newPlainText("recipe", recipe)
                     clipboard.setPrimaryClip(clip)
-                    scope.launch { snackbarHostState.showSnackbar("Recette copiée !") }
+                    scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.snackbar_recipe_copied)) }
                 }) {
                     Icon(
                         imageVector = Icons.Filled.ContentCopy,
-                        contentDescription = "Copier"
+                        contentDescription = context.getString(R.string.action_copy)
                     )
                 }
                 IconButton(onClick = {
@@ -83,11 +84,11 @@ fun RecipeCard(
                         type = "text/plain"
                         putExtra(Intent.EXTRA_TEXT, recipe)
                     }
-                    context.startActivity(Intent.createChooser(intent, "Partager la recette"))
+                    context.startActivity(Intent.createChooser(intent, context.getString(R.string.desc_share_full)))
                 }) {
                     Icon(
                         imageVector = Icons.Filled.Share,
-                        contentDescription = "Partager"
+                        contentDescription = context.getString(R.string.action_share)
                     )
                 }
             }

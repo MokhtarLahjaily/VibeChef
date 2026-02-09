@@ -49,14 +49,14 @@ fun LoadingState(modifier: Modifier = Modifier) {
         ) {
             Icon(
                 imageVector = Icons.Filled.Edit,
-                contentDescription = "Chargement",
+                contentDescription = null,
                 modifier = Modifier
                     .size(80.dp)
                     .scale(scale),
                 tint = MaterialTheme.colorScheme.primary
             )
             Text(
-                text = "Le chef réfléchit…",
+                text = "Le chef r\u00e9fl\u00e9chit\u2026",
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha)
             )
@@ -81,7 +81,7 @@ fun ErrorState(
         ) {
             Icon(
                 imageVector = Icons.Rounded.Warning,
-                contentDescription = "Erreur",
+                contentDescription = null,
                 tint = MaterialTheme.colorScheme.error,
                 modifier = Modifier.size(64.dp)
             )
@@ -95,7 +95,7 @@ fun ErrorState(
             )
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedButton(onClick = onRetry) {
-                Text(text = "Réessayer")
+                Text(text = "R\u00e9essayer")
             }
         }
     }

@@ -1,8 +1,10 @@
 package com.lahjaily.vibechef.ui
 
+import android.Manifest
 import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
 import android.os.Build
@@ -23,6 +25,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lahjaily.vibechef.R
 import com.lahjaily.vibechef.ui.components.*
@@ -35,9 +38,7 @@ import java.util.Locale
 @Composable
 fun VibeChefScreen(
     viewModel: MainViewModel,
-    userId: String,
-    onSignOut: () -> Unit,
-    onNavigateToHistory: () -> Unit
+    userId: String
 ) {
     val context = LocalContext.current
     var ingredients by remember { mutableStateOf("") }
@@ -46,7 +47,6 @@ fun VibeChefScreen(
     val capturedImages = remember { mutableStateListOf<Bitmap>() }
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val isDark by viewModel.isDarkMode.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -80,6 +80,12 @@ fun VibeChefScreen(
     ) { bitmap ->
         if (bitmap != null) capturedImages.add(bitmap)
     }
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) cameraLauncher.launch(null)
+        else scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.snackbar_camera_denied)) }
+    }
 
     // Gallery picker
     val galleryLauncher = rememberLauncherForActivityResult(
@@ -103,14 +109,23 @@ fun VibeChefScreen(
         listOf(
             context.getString(R.string.filter_vegetarian),
             context.getString(R.string.filter_gluten_free),
-            context.getString(R.string.filter_spicy)
+            context.getString(R.string.filter_spicy),
+            context.getString(R.string.filter_vegan),
+            context.getString(R.string.filter_dairy_free),
+            context.getString(R.string.filter_keto),
+            context.getString(R.string.filter_halal),
+            context.getString(R.string.filter_nut_free),
+            context.getString(R.string.filter_low_carb)
         )
     }
     val vibes = remember {
         listOf(
             context.getString(R.string.vibe_fast),
             context.getString(R.string.vibe_gourmet),
-            context.getString(R.string.vibe_fun)
+            context.getString(R.string.vibe_fun),
+            context.getString(R.string.vibe_healthy),
+            context.getString(R.string.vibe_comfort),
+            context.getString(R.string.vibe_date_night)
         )
     }
 
@@ -122,21 +137,7 @@ fun VibeChefScreen(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary,
                     actionIconContentColor = MaterialTheme.colorScheme.onPrimary
-                ),
-                actions = {
-                    IconToggleButton(checked = isDark, onCheckedChange = { viewModel.toggleTheme() }) {
-                        Icon(
-                            imageVector = if (isDark) Icons.Filled.Brightness7 else Icons.Filled.Brightness4,
-                            contentDescription = if (isDark) stringResource(R.string.desc_theme_toggle_light) else stringResource(R.string.desc_theme_toggle_dark)
-                        )
-                    }
-                    IconButton(onClick = onNavigateToHistory) {
-                        Icon(imageVector = Icons.Filled.History, contentDescription = stringResource(R.string.action_history))
-                    }
-                    IconButton(onClick = onSignOut) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ExitToApp, contentDescription = stringResource(R.string.action_logout))
-                    }
-                }
+                )
             )
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
@@ -163,7 +164,13 @@ fun VibeChefScreen(
                         IconButton(onClick = { galleryLauncher.launch("image/*") }) {
                             Icon(imageVector = Icons.Filled.PhotoLibrary, contentDescription = stringResource(R.string.action_gallery))
                         }
-                        IconButton(onClick = { cameraLauncher.launch(null) }) {
+                        IconButton(onClick = {
+                            if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                                cameraLauncher.launch(null)
+                            } else {
+                                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                            }
+                        }) {
                             Icon(imageVector = Icons.Rounded.PhotoCamera, contentDescription = stringResource(R.string.action_camera))
                         }
                         IconButton(onClick = {

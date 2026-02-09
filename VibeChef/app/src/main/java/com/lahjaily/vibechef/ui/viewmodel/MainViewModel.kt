@@ -165,4 +165,15 @@ class MainViewModel @Inject constructor(
             }
         }
     }
+
+    fun clearCache(userId: String) {
+        viewModelScope.launch {
+            try {
+                recipeDao.deleteAllByUser(userId)
+                Log.d("VibeChefDebug", "Cache cleared for $userId")
+            } catch (e: Exception) {
+                Log.e("VibeChefDebug", "Erreur clear cache : ${e.message}")
+            }
+        }
+    }
 }

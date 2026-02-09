@@ -6,8 +6,11 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.lahjaily.vibechef.R
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun FiltersSection(
     restrictionOptions: List<String>,
@@ -17,13 +20,14 @@ fun FiltersSection(
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
-            text = "Restrictions",
+            text = stringResource(R.string.title_restrictions),
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.onBackground
         )
-        Row(
+        FlowRow(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             restrictionOptions.forEach { opt ->
                 val selected = opt in selectedFilters
@@ -40,6 +44,7 @@ fun FiltersSection(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun VibeSelector(
     vibes: List<String>,
@@ -47,9 +52,10 @@ fun VibeSelector(
     onVibeSelected: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
+    FlowRow(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         vibes.forEach { vibe ->
             FilterChip(

@@ -36,7 +36,7 @@ fun CapturedImagesGallery(
                 ) {
                     Image(
                         bitmap = bmp.asImageBitmap(),
-                        contentDescription = "Photo capturée",
+                        contentDescription = null,
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
@@ -47,7 +47,7 @@ fun CapturedImagesGallery(
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Close,
-                        contentDescription = "Supprimer",
+                        contentDescription = null,
                         tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
