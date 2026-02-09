@@ -1,4 +1,4 @@
-package com.lahjaily.vibechef.ui.navigation
+﻿package com.lahjaily.vibechef.ui.navigation
 
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -10,14 +10,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.lahjaily.vibechef.R
-import com.lahjaily.vibechef.ui.AuthScreen
-import com.lahjaily.vibechef.ui.HistoryScreen
-import com.lahjaily.vibechef.ui.RecipeDetailScreen
-import com.lahjaily.vibechef.ui.VibeChefScreen
+import com.lahjaily.vibechef.ui.*
 import com.lahjaily.vibechef.ui.viewmodel.LoginViewModel
 import com.lahjaily.vibechef.ui.viewmodel.MainViewModel
 
 sealed class Screen(val route: String) {
+    data object Splash : Screen("splash")
+    data object Onboarding : Screen("onboarding")
     data object Login : Screen("login")
     data object Home : Screen("home")
     data object History : Screen("history")
@@ -30,9 +29,33 @@ fun AppNavigation(
     vibeChefViewModel: MainViewModel
 ) {
     val navController = rememberNavController()
-    val startDestination = if (loginViewModel.currentUser != null) Screen.Home.route else Screen.Login.route
 
-    NavHost(navController = navController, startDestination = startDestination) {
+    NavHost(navController = navController, startDestination = Screen.Splash.route) {
+        composable(Screen.Splash.route) {
+            SplashScreen(
+                onSplashFinished = {
+                    val nextRoute = when {
+                        !vibeChefViewModel.hasSeenOnboarding -> Screen.Onboarding.route
+                        loginViewModel.currentUser != null -> Screen.Home.route
+                        else -> Screen.Login.route
+                    }
+                    navController.navigate(nextRoute) {
+                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+        composable(Screen.Onboarding.route) {
+            OnboardingScreen(
+                onFinished = {
+                    vibeChefViewModel.markOnboardingSeen()
+                    val nextRoute = if (loginViewModel.currentUser != null) Screen.Home.route else Screen.Login.route
+                    navController.navigate(nextRoute) {
+                        popUpTo(Screen.Onboarding.route) { inclusive = true }
+                    }
+                }
+            )
+        }
         composable(Screen.Login.route) {
             AuthScreen(
                 loginViewModel = loginViewModel,
@@ -44,7 +67,6 @@ fun AppNavigation(
             )
         }
         composable(Screen.Home.route) {
-            // On récupère l'utilisateur courant (non null ici car protégé par la navigation)
             val user = loginViewModel.currentUser
             if (user != null) {
                 VibeChefScreen(
@@ -61,7 +83,6 @@ fun AppNavigation(
                     }
                 )
             } else {
-                // Fallback si jamais user est null (ne devrait pas arriver)
                 LaunchedEffect(Unit) { navController.navigate(Screen.Login.route) }
             }
         }

@@ -5,8 +5,9 @@ data class Recipe(
     val userId: String = "",
     val title: String = "",
     val content: String = "",
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    val isFavorite: Boolean = false
 ) {
     // Constructeur vide requis par Firestore pour la désérialisation
-    constructor() : this("", "", "", "", System.currentTimeMillis())
+    constructor() : this("", "", "", "", System.currentTimeMillis(), false)
 }

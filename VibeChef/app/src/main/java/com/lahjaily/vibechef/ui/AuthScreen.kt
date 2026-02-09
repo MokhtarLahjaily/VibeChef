@@ -24,15 +24,18 @@ import com.lahjaily.vibechef.ui.viewmodel.AuthUiState
 import com.lahjaily.vibechef.ui.viewmodel.LoginViewModel
 
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import kotlinx.coroutines.launch
 
 @Composable
 fun AuthScreen(loginViewModel: LoginViewModel, onAuthenticated: () -> Unit) {
     val authState by loginViewModel.authState.collectAsState()
     val formState by loginViewModel.formState.collectAsState()
     var isSignUpMode by remember { mutableStateOf(false) }
+    var showForgotPassword by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollState = rememberScrollState()
     val keyboardController = LocalSoftwareKeyboardController.current
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(authState) {
         if (authState is AuthUiState.Authenticated) {
@@ -40,6 +43,47 @@ fun AuthScreen(loginViewModel: LoginViewModel, onAuthenticated: () -> Unit) {
         } else if (authState is AuthUiState.Error) {
             snackbarHostState.showSnackbar((authState as AuthUiState.Error).message)
         }
+    }
+
+    // Forgot password dialog
+    if (showForgotPassword) {
+        var resetEmail by remember { mutableStateOf(formState.email) }
+        AlertDialog(
+            onDismissRequest = { showForgotPassword = false },
+            title = { Text(stringResource(R.string.forgot_password_title)) },
+            text = {
+                Column {
+                    Text(
+                        stringResource(R.string.forgot_password_desc),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    OutlinedTextField(
+                        value = resetEmail,
+                        onValueChange = { resetEmail = it },
+                        label = { Text(stringResource(R.string.label_email)) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    loginViewModel.resetPassword(resetEmail) { success, message ->
+                        showForgotPassword = false
+                        scope.launch { snackbarHostState.showSnackbar(message) }
+                    }
+                }) {
+                    Text(stringResource(R.string.forgot_password_send))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showForgotPassword = false }) {
+                    Text(stringResource(R.string.delete_confirm_no))
+                }
+            }
+        )
     }
 
     Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
@@ -125,12 +169,14 @@ fun AuthScreen(loginViewModel: LoginViewModel, onAuthenticated: () -> Unit) {
                 color = MaterialTheme.colorScheme.primary
             )
 
-            // Extra: forgot password placeholder (not implemented)
+            // Extra: forgot password
             if (!isSignUpMode) {
                 Text(
                     text = stringResource(R.string.action_forgot_password),
                     style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.align(Alignment.End),
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .clickable { showForgotPassword = true },
                     color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
                 )
             }

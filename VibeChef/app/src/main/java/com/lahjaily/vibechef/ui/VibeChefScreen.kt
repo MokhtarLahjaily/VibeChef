@@ -4,6 +4,9 @@ import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.ImageDecoder
+import android.os.Build
+import android.provider.MediaStore
 import android.speech.RecognizerIntent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -78,6 +81,24 @@ fun VibeChefScreen(
         if (bitmap != null) capturedImages.add(bitmap)
     }
 
+    // Gallery picker
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetMultipleContents()
+    ) { uris ->
+        uris.forEach { uri ->
+            try {
+                val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, uri))
+                        .copy(Bitmap.Config.ARGB_8888, false)
+                } else {
+                    @Suppress("DEPRECATION")
+                    MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
+                }
+                capturedImages.add(bitmap)
+            } catch (_: Exception) { }
+        }
+    }
+
     val restrictionOptions = remember {
         listOf(
             context.getString(R.string.filter_vegetarian),
@@ -139,6 +160,9 @@ fun VibeChefScreen(
                 maxLines = 3,
                 trailingIcon = {
                     Row {
+                        IconButton(onClick = { galleryLauncher.launch("image/*") }) {
+                            Icon(imageVector = Icons.Filled.PhotoLibrary, contentDescription = stringResource(R.string.action_gallery))
+                        }
                         IconButton(onClick = { cameraLauncher.launch(null) }) {
                             Icon(imageVector = Icons.Rounded.PhotoCamera, contentDescription = stringResource(R.string.action_camera))
                         }

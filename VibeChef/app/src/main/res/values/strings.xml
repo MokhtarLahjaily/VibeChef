@@ -96,4 +96,39 @@
     <string name="delete_confirm_yes">Supprimer</string>
     <string name="delete_confirm_no">Annuler</string>
     <string name="snackbar_recipe_deleted">Recette supprimée</string>
+
+    <!-- Splash Screen -->
+    <string name="splash_tagline">Cuisinez avec style !</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title_1">Bienvenue sur VibeChef</string>
+    <string name="onboarding_title_2">Choisissez votre vibe</string>
+    <string name="onboarding_title_3">IA à votre service</string>
+    <string name="onboarding_title_4">Sauvegardez vos recettes</string>
+    <string name="onboarding_desc_1">Transformez vos ingrédients en recettes délicieuses grâce à l\'intelligence artificielle.</string>
+    <string name="onboarding_desc_2">Rapide, gourmet ou fun — choisissez l\'ambiance qui vous correspond.</string>
+    <string name="onboarding_desc_3">Notre chef IA génère des recettes personnalisées en quelques secondes.</string>
+    <string name="onboarding_desc_4">Retrouvez vos créations favorites dans votre historique personnel.</string>
+    <string name="onboarding_skip">Passer</string>
+    <string name="onboarding_previous">Précédent</string>
+    <string name="onboarding_next">Suivant</string>
+    <string name="onboarding_get_started">Commencer</string>
+
+    <!-- Forgot Password -->
+    <string name="forgot_password_title">Réinitialiser le mot de passe</string>
+    <string name="forgot_password_desc">Entrez votre adresse email pour recevoir un lien de réinitialisation.</string>
+    <string name="forgot_password_send">Envoyer</string>
+
+    <!-- Search / Filter -->
+    <string name="search_placeholder">Rechercher une recette…</string>
+    <string name="search_clear">Effacer la recherche</string>
+    <string name="search_no_results">Aucun résultat trouvé</string>
+
+    <!-- Favorites -->
+    <string name="filter_favorites">Filtrer les favoris</string>
+    <string name="favorites_empty">Aucun favori pour le moment</string>
+    <string name="action_favorite">Favori</string>
+
+    <!-- Gallery -->
+    <string name="action_gallery">Galerie</string>
 </resources>

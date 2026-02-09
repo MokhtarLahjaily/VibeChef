@@ -1,4 +1,4 @@
-package com.lahjaily.vibechef.ui.viewmodel
+﻿package com.lahjaily.vibechef.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -7,13 +7,14 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-// Représente l'état d'authentification
 sealed interface AuthUiState {
     data object Idle : AuthUiState
     data object Loading : AuthUiState
@@ -29,7 +30,10 @@ data class LoginFormState(
     val passwordError: String? = null
 )
 
-class LoginViewModel(private val authRepository: AuthRepository = AuthRepository()) : ViewModel() {
+@HiltViewModel
+class LoginViewModel @Inject constructor(
+    private val authRepository: AuthRepository
+) : ViewModel() {
 
     private val _authState = MutableStateFlow<AuthUiState>(AuthUiState.Idle)
     val authState: StateFlow<AuthUiState> = _authState.asStateFlow()
@@ -40,7 +44,6 @@ class LoginViewModel(private val authRepository: AuthRepository = AuthRepository
     val currentUser get() = authRepository.currentUser
 
     init {
-        // Si un utilisateur est déjà connecté
         authRepository.currentUser?.let { user ->
             _authState.value = AuthUiState.Authenticated(user)
         }
@@ -80,10 +83,10 @@ class LoginViewModel(private val authRepository: AuthRepository = AuthRepository
 
     private fun getFriendlyErrorMessage(e: Throwable): String {
         return when (e) {
-            is FirebaseAuthInvalidUserException -> "Ce compte n'existe pas. Veuillez créer un compte."
+            is FirebaseAuthInvalidUserException -> "Ce compte n'existe pas. Veuillez creer un compte."
             is FirebaseAuthInvalidCredentialsException -> "Email ou mot de passe incorrect."
-            is FirebaseAuthUserCollisionException -> "Cet email est déjà utilisé."
-            else -> "Erreur de connexion. Vérifiez votre réseau ou réessayez."
+            is FirebaseAuthUserCollisionException -> "Cet email est deja utilise."
+            else -> "Erreur de connexion. Verifiez votre reseau ou reessayez."
         }
     }
 
@@ -121,5 +124,21 @@ class LoginViewModel(private val authRepository: AuthRepository = AuthRepository
         authRepository.signOut()
         _authState.value = AuthUiState.Idle
         _formState.value = LoginFormState()
+    }
+
+    fun resetPassword(email: String, onResult: (Boolean, String) -> Unit) {
+        viewModelScope.launch {
+            val trimmedEmail = email.trim()
+            if (trimmedEmail.isBlank() || !trimmedEmail.contains('@')) {
+                onResult(false, "Veuillez entrer un email valide.")
+                return@launch
+            }
+            val result = authRepository.resetPassword(trimmedEmail)
+            result.onSuccess {
+                onResult(true, "Email de reinitialisation envoye a $trimmedEmail")
+            }.onFailure { e ->
+                onResult(false, "Erreur : ${e.message}")
+            }
+        }
     }
 }

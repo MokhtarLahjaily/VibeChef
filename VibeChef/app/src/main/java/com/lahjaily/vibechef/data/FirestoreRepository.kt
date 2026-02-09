@@ -40,4 +40,9 @@ class FirestoreRepository {
         db.collection("users").document(userId).collection("recipes")
             .document(recipeId).delete().await()
     }
+
+    suspend fun toggleFavorite(userId: String, recipeId: String, isFavorite: Boolean) {
+        db.collection("users").document(userId).collection("recipes")
+            .document(recipeId).update("isFavorite", isFavorite).await()
+    }
 }
