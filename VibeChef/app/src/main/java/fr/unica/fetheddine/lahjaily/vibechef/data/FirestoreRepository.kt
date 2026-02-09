@@ -6,6 +6,7 @@ import fr.unica.fetheddine.lahjaily.vibechef.data.model.Recipe
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.tasks.await
 
 class FirestoreRepository {
@@ -24,7 +25,7 @@ class FirestoreRepository {
 
         val subscription = query.addSnapshotListener { snapshot, error ->
             if (error != null) {
-                close(error)
+                trySend(emptyList())
                 return@addSnapshotListener
             }
             if (snapshot != null) {
@@ -33,7 +34,7 @@ class FirestoreRepository {
             }
         }
         awaitClose { subscription.remove() }
-    }
+    }.catch { emit(emptyList()) }
 
     suspend fun deleteRecipe(userId: String, recipeId: String) {
         db.collection("users").document(userId).collection("recipes")
